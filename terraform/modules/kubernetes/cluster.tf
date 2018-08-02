@@ -1,12 +1,5 @@
-#
-# EKS Cluster Resources
-#  * IAM Role to allow EKS service to manage other AWS services
-#  * EC2 Security Group to allow networking traffic with EKS cluster
-#  * EKS Cluster
-#
-
 resource "aws_iam_role" "managed-cluster" {
-  name = "${var.cluster_name}-cluster"
+  name = "${var.name}-cluster"
 
   assume_role_policy = <<POLICY
 {
@@ -35,9 +28,9 @@ resource "aws_iam_role_policy_attachment" "managed-cluster-AmazonEKSServicePolic
 }
 
 resource "aws_security_group" "managed-cluster" {
-  name        = "${var.cluster_name}-cluster"
+  name        = "${var.name}-cluster"
   description = "Cluster communication with worker nodes"
-  vpc_id      = "${aws_vpc.managed.id}"
+  vpc_id      = "${var.vpc}"
 
   egress {
     from_port   = 0
@@ -47,7 +40,7 @@ resource "aws_security_group" "managed-cluster" {
   }
 
   tags {
-    Name = "${var.cluster_name}"
+    Name = "${var.name}"
   }
 }
 
@@ -80,12 +73,12 @@ resource "aws_security_group_rule" "managed-cluster-ingress-https" {
 }
 
 resource "aws_eks_cluster" "managed" {
-  name     = "${var.cluster_name}"
+  name     = "${var.name}"
   role_arn = "${aws_iam_role.managed-cluster.arn}"
 
   vpc_config {
     security_group_ids = ["${aws_security_group.managed-cluster.id}"]
-    subnet_ids         = ["${aws_subnet.managed.*.id}"]
+    subnet_ids         = ["${var.subnets}"]
   }
 
   depends_on = [

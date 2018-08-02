@@ -1,14 +1,5 @@
-#
-# EKS Worker Nodes Resources
-#  * IAM role allowing Kubernetes actions to access other AWS services
-#  * EC2 Security Group to allow networking traffic
-#  * Data source to fetch latest EKS worker AMI
-#  * AutoScaling Launch Configuration to configure worker instances
-#  * AutoScaling Group to launch worker instances
-#
-
 resource "aws_iam_role" "managed-node" {
-  name = "${var.cluster_name}-node"
+  name = "${var.name}-node"
 
   assume_role_policy = <<POLICY
 {
@@ -42,14 +33,14 @@ resource "aws_iam_role_policy_attachment" "managed-node-AmazonEC2ContainerRegist
 }
 
 resource "aws_iam_instance_profile" "managed-node" {
-  name = "${var.cluster_name}"
+  name = "${var.name}"
   role = "${aws_iam_role.managed-node.name}"
 }
 
 resource "aws_security_group" "managed-node" {
-  name        = "${var.cluster_name}-node"
+  name        = "${var.name}-node"
   description = "Security group for all nodes in the cluster"
-  vpc_id      = "${aws_vpc.managed.id}"
+  vpc_id      = "${var.vpc}"
 
   egress {
     from_port   = 0
@@ -60,8 +51,8 @@ resource "aws_security_group" "managed-node" {
 
   tags = "${
     map(
-     "Name", "${var.cluster_name}-node",
-     "kubernetes.io/cluster/${var.cluster_name}", "owned",
+     "Name", "${var.name}-node",
+     "kubernetes.io/cluster/${var.name}", "owned",
     )
   }"
 }
@@ -111,7 +102,7 @@ mkdir -p $CA_CERTIFICATE_DIRECTORY
 echo "${aws_eks_cluster.managed.certificate_authority.0.data}" | base64 -d >  $CA_CERTIFICATE_FILE_PATH
 INTERNAL_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 sed -i s,MASTER_ENDPOINT,${aws_eks_cluster.managed.endpoint},g /var/lib/kubelet/kubeconfig
-sed -i s,CLUSTER_NAME,${var.cluster_name},g /var/lib/kubelet/kubeconfig
+sed -i s,CLUSTER_NAME,${var.name},g /var/lib/kubelet/kubeconfig
 sed -i s,REGION,${data.aws_region.current.name},g /etc/systemd/system/kubelet.service
 sed -i s,MAX_PODS,20,g /etc/systemd/system/kubelet.service
 sed -i s,MASTER_ENDPOINT,${aws_eks_cluster.managed.endpoint},g /etc/systemd/system/kubelet.service
@@ -131,7 +122,7 @@ resource "aws_launch_configuration" "managed" {
   iam_instance_profile        = "${aws_iam_instance_profile.managed-node.name}"
   image_id                    = "${data.aws_ami.eks-worker.id}"
   instance_type               = "m5.large"
-  name_prefix                 = "${var.cluster_name}"
+  name_prefix                 = "${var.name}"
   security_groups             = ["${aws_security_group.managed-node.id}"]
   user_data_base64            = "${base64encode(local.managed-node-userdata)}"
 
@@ -145,17 +136,17 @@ resource "aws_autoscaling_group" "managed" {
   launch_configuration = "${aws_launch_configuration.managed.id}"
   max_size             = 3
   min_size             = 1
-  name                 = "${var.cluster_name}"
-  vpc_zone_identifier  = ["${aws_subnet.managed.*.id}"]
+  name                 = "${var.name}"
+  vpc_zone_identifier  = ["${var.subnets}"]
 
   tag {
     key                 = "Name"
-    value               = "${var.cluster_name}"
+    value               = "${var.name}"
     propagate_at_launch = true
   }
 
   tag {
-    key                 = "kubernetes.io/cluster/${var.cluster_name}"
+    key                 = "kubernetes.io/cluster/${var.name}"
     value               = "owned"
     propagate_at_launch = true
   }

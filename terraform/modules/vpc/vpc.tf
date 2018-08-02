@@ -1,18 +1,10 @@
-#
-# VPC Resources
-#  * VPC
-#  * Subnets
-#  * Internet Gateway
-#  * Route Table
-#
-
 resource "aws_vpc" "managed" {
   cidr_block = "10.0.0.0/16"
 
   tags = "${
     map(
-     "Name", "${var.cluster_name}-node",
-     "kubernetes.io/cluster/${var.cluster_name}", "shared",
+     "Name", "${var.infrastructure_name}-node",
+     "kubernetes.io/cluster/${var.infrastructure_name}", "shared",
     )
   }"
 }
@@ -26,8 +18,8 @@ resource "aws_subnet" "managed" {
 
   tags = "${
     map(
-     "Name", "${var.cluster_name}-node",
-     "kubernetes.io/cluster/${var.cluster_name}", "shared",
+     "Name", "${var.infrastructure_name}-node",
+     "kubernetes.io/cluster/${var.infrastructure_name}", "shared",
     )
   }"
 }
@@ -36,7 +28,7 @@ resource "aws_internet_gateway" "managed" {
   vpc_id = "${aws_vpc.managed.id}"
 
   tags {
-    Name = "${var.cluster_name}"
+    Name = "${var.infrastructure_name}"
   }
 }
 
@@ -46,6 +38,10 @@ resource "aws_route_table" "managed" {
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = "${aws_internet_gateway.managed.id}"
+  }
+
+  tags {
+    Name = "${var.infrastructure_name}"
   }
 }
 
