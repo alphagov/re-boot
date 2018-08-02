@@ -22,7 +22,7 @@ Apply Terraform manifets:
 $ terraform init && terraform apply
 ```
 
-Follow the [https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html](EKS Getting Started Guide). Some of it is relevant, some of it is not. The following was interesting at the time of writing:
+Follow the [EKS Getting Started Guide](https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html). Some of it is relevant, some of it is not. The following was interesting at the time of writing:
 
 - You can use the stock `kubectl`.
 - Configure `kubectl` work with `aws-iam-authenticator` (you can `go install` this if you want)
