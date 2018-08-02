@@ -101,3 +101,7 @@ output "vpc_id" {
 output "subnet_ids" {
   value = "${join(",", aws_subnet.subnets.*.id)}"
 }
+
+output "azs" {
+  value = "${join(",", var.azs)}"
+}
