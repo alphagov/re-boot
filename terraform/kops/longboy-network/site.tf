@@ -1,5 +1,5 @@
 variable "env" {
-  default = "longboy"
+  default = "longboy.k8s.local"
 }
 
 variable "region" {
@@ -58,9 +58,12 @@ resource "aws_subnet" "subnets" {
     count.index
   )}"
 
-  tags {
-    Name = "${var.env}-${count.index}"
-  }
+  tags = "${map(
+    "Name", "${var.env}-${count.index}",
+    "SubnetType", "Public",
+    "kubernetes.io/cluster/${var.env}", "shared",
+    "kubernetes.io/role/elb", "1"
+  )}"
 }
 
 resource "aws_internet_gateway" "igw" {
@@ -84,7 +87,7 @@ resource "aws_route_table" "rt" {
   }
 }
 
-resource "aws_route_table_association" "web-public-rt" {
+resource "aws_route_table_association" "rta" {
   count = "${length(var.subnet_cidrs)}"
 
   subnet_id      = "${element(aws_subnet.subnets.*.id, count.index)}"
