@@ -21,6 +21,7 @@ echo "$azs"
 kops create cluster \
      --name=longboy.k8s.local \
      --state=s3://gds-paas-k8s-shared-state \
+     --networking flannel \
      --cloud=aws \
      --node-count=3 \
      --zones="$azs" \
