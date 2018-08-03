@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -ueo pipefail
 
+: "$LOGIT_API_KEY"
+: "$LOGIT_ELASTICSEARCH_HOST"
+
+script_dir="$( realpath . )"
+
 function cluster_up () {
   kops validate cluster \
        --name=longboy.k8s.local \
@@ -26,6 +31,21 @@ MSG
 kubectl apply \
   -f https://raw.githubusercontent.com/kubernetes/kops/master/addons/prometheus-operator/v0.19.0.yaml \
   -f https://raw.githubusercontent.com/kubernetes/kops/master/addons/kubernetes-dashboard/v1.8.3.yaml
+
+echo '✅  Untrusted software is installed'
+
+echo '🔧  Installing logging'
+kubectl create secret generic logit \
+        --namespace kube-system \
+        --from-literal "logitApiKey=${LOGIT_API_KEY}" \
+        --from-literal "logitElasticsearchHost=${LOGIT_ELASTICSEARCH_HOST}" \
+        --output yaml \
+        --dry-run \
+ | kubectl apply -f -
+
+kubectl apply -f "${script_dir}/mgmt/logging.yaml"
+
+echo '✅  Logging is installed'
 
 service_account_name="default"
 
