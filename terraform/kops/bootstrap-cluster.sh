@@ -4,7 +4,7 @@ set -ueo pipefail
 function cluster_up () {
   kops validate cluster \
        --name=longboy.k8s.local \
-       --state=s3://gds-paas-k8s-shared-state &> /dev/null
+       --state=s3://gds-paas-k8s-shared-state
 }
 
 echo '🆗  Starting bootstrap procedure'
@@ -63,6 +63,8 @@ cat <<EOF
 🔑  You will be able to log in with the following token:
 
 $service_account_token
+
+💻  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/
 
 -------------------------------------------------------------------------------
 
