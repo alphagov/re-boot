@@ -82,29 +82,35 @@ service_account_token="$(
 echo '💤  Waiting for ELBs'
 sleep 30
 
+dashboard_host="$(kubectl get service -n kube-system kubernetes-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+dashboard_port="$(kubectl get service -n kube-system kubernetes-dashboard -o jsonpath='{.spec.ports[0].port}')"
+dashboard_url="https://${dashboard_host}:${dashboard_port}"
+
 grafana_host="$(kubectl get service -n monitoring grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
 grafana_port="$(kubectl get service -n monitoring grafana -o jsonpath='{.spec.ports[0].port}')"
 grafana_url="http://${grafana_host}:${grafana_port}"
+
+prometheus_host="$(kubectl get service -n monitoring prometheus-dashboard -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+prometheus_port="$(kubectl get service -n monitoring prometheus-dashboard -o jsonpath='{.spec.ports[0].port}')"
+prometheus_url="http://${prometheus_host}:${prometheus_port}"
 
 cat <<EOF
 
 -------------------------------------------------------------------------------
 
-💻  In a separate terminal open a tunnel to the cluster with "kubectl proxy"
-
-🔑  You will be able to log in with the following token:
+💻  Dashboard
+    💻  ${dashboard_url}
+    🔑  You will be able to log in with the following token:
 
 $service_account_token
 
-💻  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/
-
 📈  Grafana
-    💻  ${grafana_url}
+    💻  ${grafana_url}/dashboards
     😎  admin
     🔑  admin
 
 🔥  Prometheus
-    💻  prometheus_url
+    💻  ${prometheus_url}
 
 -------------------------------------------------------------------------------
 
