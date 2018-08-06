@@ -33,6 +33,11 @@ fi
 echo '✅  Cluster is ready, proceeding'
 
 echo '🔧  Installing Prometheus'
+echo '    🔧  Installing Prometheus custom resources'
+kubectl apply -f "${script_dir}/mgmt/prometheus-custom-resources.yaml"
+echo '💤  Waiting for custom resources'
+sleep 5
+echo '    🔧  Installing Prometheus, AlertManager, Grafana'
 kubectl apply -f "${script_dir}/mgmt/prometheus.yaml"
 echo '✅  Prometheus is installed'
 
