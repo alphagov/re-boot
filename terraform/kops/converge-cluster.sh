@@ -22,17 +22,13 @@ fi
 
 echo '✅  Cluster is ready, proceeding'
 
-cat <<MSG
-🔧  Installing untrusted software
-      - prometheus-operator
-      - kubernetes-dashboard
-MSG
+echo '🔧  Installing Prometheus'
+kubectl apply -f "${script_dir}/mgmt/prometheus.yaml"
+echo '✅  Prometheus is installed'
 
-kubectl apply \
-  -f https://raw.githubusercontent.com/kubernetes/kops/master/addons/prometheus-operator/v0.19.0.yaml \
-  -f https://raw.githubusercontent.com/kubernetes/kops/master/addons/kubernetes-dashboard/v1.8.3.yaml
-
-echo '✅  Untrusted software is installed'
+echo '🔧  Installing Dashboard'
+kubectl apply -f "${script_dir}/mgmt/dashboard.yaml"
+echo '✅  Dashboard is installed'
 
 echo '🔧  Installing logging'
 kubectl create secret generic logit \
@@ -44,7 +40,6 @@ kubectl create secret generic logit \
  | kubectl apply -f -
 
 kubectl apply -f "${script_dir}/mgmt/logging.yaml"
-
 echo '✅  Logging is installed'
 
 service_account_name="default"
@@ -74,6 +69,13 @@ service_account_token="$(
   base64 --decode
 )"
 
+echo '💤  Waiting for ELBs'
+sleep 30
+
+grafana_host="$(kubectl get service -n monitoring grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+grafana_port="$(kubectl get service -n monitoring grafana -o jsonpath='{.spec.ports[0].port}')"
+grafana_url="http://${grafana_host}:${grafana_port}"
+
 cat <<EOF
 
 -------------------------------------------------------------------------------
@@ -85,6 +87,14 @@ cat <<EOF
 $service_account_token
 
 💻  http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/
+
+📈  Grafana
+    💻  ${grafana_url}
+    😎  admin
+    🔑  admin
+
+🔥  Prometheus
+    💻  prometheus_url
 
 -------------------------------------------------------------------------------
 
