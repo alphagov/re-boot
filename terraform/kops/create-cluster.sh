@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -ueo pipefail
 
-cd longboy-network
+name="$1"
+
+cd "deployments/${name}"
 terraform init
 terraform apply
 
@@ -19,7 +21,7 @@ echo "$subnet_ids"
 echo "$azs"
 
 kops create cluster \
-     --name=longboy.k8s.local \
+     --name="${name}.k8s.local" \
      --state=s3://gds-paas-k8s-shared-state \
      --networking flannel \
      --cloud=aws \

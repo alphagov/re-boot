@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -ueo pipefail
 
+name="$1"
+cluster_name="${name}.k8s.local"
+state_bucket='s3://gds-paas-k8s-shared-state'
+
 : "$LOGIT_API_KEY"
 : "$LOGIT_ELASTICSEARCH_HOST"
 
@@ -8,11 +12,17 @@ script_dir="$( realpath . )"
 
 function cluster_up () {
   kops validate cluster \
-       --name=longboy.k8s.local \
-       --state=s3://gds-paas-k8s-shared-state
+       --name="${cluster_name}" \
+       --state="${state_bucket}"
 }
 
 echo '🆗  Starting bootstrap procedure'
+echo "🔀   Switching kubectl to \"${cluster_name}\""
+
+kops export kubecfg "${cluster_name}" --state="${state_bucket}"
+
+echo "👏   Switched kubectl to \"${cluster_name}\""
+
 echo '❓  Checking if cluster is ready'
 
 if ! cluster_up; then
