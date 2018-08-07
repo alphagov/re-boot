@@ -18,6 +18,8 @@ You will have to specify some secrets for the Logit stack that this cluster will
 
 ## Authentication with Google (Optional)
 
+You have to [create a client (and credentials) in Google Cloud Platform first](https://cloud.google.com/community/tutorials/cloud-functions-oauth-gmail).
+
 You have to point the Kubernetes API servers at the correct OIDC URL and restart all the masters. You will also have to edit `mgmt/users.yaml` to include any Google users (and their roles). You can then run:
 
 ```
