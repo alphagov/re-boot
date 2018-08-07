@@ -1,0 +1,6 @@
+---
+spec:
+  kubeAPIServer:
+    oidcIssuerURL: https://accounts.google.com
+    oidcUsernameClaim: email
+    oidcClientID: (( grab $GOOGLE_AUTH_CLIENT_ID ))
