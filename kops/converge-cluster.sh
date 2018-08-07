@@ -46,6 +46,9 @@ kubectl apply -f "${script_dir}/mgmt/dashboard.yaml"
 echo '✅  Dashboard is installed'
 
 echo '🔧  Installing logging'
+# Use `kubectl create` to output YAML configuration, which is then applied.
+# We have to do this because `create` is not akin to upsert, so will fail
+# when run repeatedly.
 kubectl create secret generic logit \
         --namespace kube-system \
         --from-literal "logitApiKey=${LOGIT_API_KEY}" \
