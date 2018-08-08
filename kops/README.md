@@ -2,6 +2,12 @@
 
 You can spin up the infrastructure required for Kops and a new cluster inside it with:
 
+## Prerequisites
+
+[terraform 0.11.7](https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_darwin_amd64.zip)
+
+[kops](https://github.com/kubernetes/kops/releases/download/1.9.2/kops-darwin-amd64)
+
 ## Creating
 
 ```
