@@ -8,6 +8,8 @@ You can spin up the infrastructure required for Kops and a new cluster inside it
 
 [kops](https://github.com/kubernetes/kops/releases/download/1.9.2/kops-darwin-amd64)
 
+Kubectl `brew install kubernetes-cli`
+
 ## Creating
 
 ```
