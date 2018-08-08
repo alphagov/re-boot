@@ -19,7 +19,7 @@ function cluster_up () {
 echo '🆗  Starting bootstrap procedure'
 echo "🔀   Switching kubectl to \"${cluster_name}\""
 
-kops export kubecfg "${cluster_name}" --state="${state_bucket}"
+kops export kubecfg --name "${cluster_name}" --state="${state_bucket}"
 
 echo "👏   Switched kubectl to \"${cluster_name}\""
 
