@@ -213,7 +213,7 @@ metadata:
     heritage: "Tiller"
   annotations:
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   
   
   ports:

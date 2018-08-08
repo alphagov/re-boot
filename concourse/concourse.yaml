@@ -245,7 +245,7 @@ web:
     ## For minikube, set this to ClusterIP, elsewhere use LoadBalancer or NodePort
     ## ref: https://kubernetes.io/docs/user-guide/services/#publishing-services---service-types
     ##
-    type: ClusterIP
+    type: LoadBalancer
 
     ## When using web.service.type: LoadBalancer, sets the user-specified load balancer IP
     # loadBalancerIP: 172.217.1.174
