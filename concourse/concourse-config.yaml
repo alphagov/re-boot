@@ -362,7 +362,7 @@ spec:
         
       containers:
         - name: concourse-web
-          image: "concourse/concourse:3.14.1"
+          image: "henryknott/concourse:latest"
           imagePullPolicy: "IfNotPresent"
           args:
             - "web"
@@ -421,6 +421,20 @@ spec:
                   key: basic-auth-password
             - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
               value: concourse-
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |-
+                  fly login \
+                    -c "http://localhost:8080/" \
+                    -k \
+                    -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
+                    -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
+                    -t "cluster-name-irrelevant"
+                  fly -t cluster-name-irrelevant builds
           ports:
             - name: atc
               containerPort: 8080
