@@ -421,6 +421,11 @@ spec:
                   key: basic-auth-password
             - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
               value: concourse-
+            - name: KUBECTL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: default-token-plx6l
+                  key: token
           readinessProbe:
             exec:
               command:
@@ -481,9 +486,9 @@ spec:
                 sleep 10
               done
               while true; do
-                fly -t "$FLY_TARGET" set-pipeline -n -p merry-christmas -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="$KUBECTL_TOKEN" -p merry-christmas -c /pipelines/pipeline.yaml
                 fly -t "$FLY_TARGET" unpause-pipeline -p merry-christmas
-                sleep 30
+                sleep 5
               done
           env:
             - name: CONCOURSE_BASIC_AUTH_USERNAME
@@ -529,142 +534,37 @@ metadata:
 data:
   pipeline.yaml: |-
     resources:
-      - name: 'x'
-        type: time
+      - name: re-boot
+        type: git
         source:
-          interval: 20s
-        check_every: 20s
-      - name: 'y'
-        type: time
-        source:
-          interval: 2000h
+          uri: https://github.com/alphagov/re-boot.git
+          branch: master
     jobs:
-      - name: +
+      - name: apply
         serial: true
         plan:
-          - get: 'x'
+          - get: re-boot
             trigger: true
-          - task: shine
+          - task: deploy
             config:
               platform: linux
               image_resource:
                 type: docker-image
                 source:
-                  repository: alpine
+                  repository: google/cloud-sdk
+                  tag: 206.0.0
+              inputs:
+                - name: re-boot
+              params:
+                KUBECTL_TOKEN: ((KUBECTL_TOKEN))
               run:
-                path: false
-      - name: +=+=+=
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [19]
-      - name: =+=+=+=+=+=
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [10]
-      - name: +=+=+=+=+=+=+=+=+
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [19]
-      - name: =+=+=+=+=+=+=+=+=+=+=+
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [10]
-      - name: +=+=+=+=+=+=+=+=+=+=+=+=+=+=
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [19]
-      - name: =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
-        serial: true
-        plan:
-          - get: 'x'
-            trigger: true
-          - get: 'y'
-            trigger: true
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [10]
-      - name: +++
-        serial: true
-        plan:
-          - get: 'y'
-            trigger: true
-          - task: shine
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: alpine
-              run:
-                path: sleep
-                args: [59]
+                path: sh
+                args:
+                - -e
+                - -c
+                - |
+                  kubectl
+                  echo $KUBECTL_TOKEN
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
