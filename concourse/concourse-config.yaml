@@ -434,7 +434,6 @@ spec:
                     -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
                     -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
                     -t "cluster-name-irrelevant"
-                  fly -t cluster-name-irrelevant builds
           ports:
             - name: atc
               containerPort: 8080
@@ -461,6 +460,46 @@ spec:
             - name: concourse-keys
               mountPath: /concourse-keys
               readOnly: true
+        - name: concourse-pipeline-updater
+          image: "leeporte/fly-cli:3.14.1"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -c
+            - -e
+            - |-
+              FLY_TARGET="cluster-name-irrelevant"
+              function logged_in() {
+                fly login \
+                  -c "http://localhost:8080/" \
+                  -k \
+                  -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
+                  -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
+                  -t "$FLY_TARGET"
+              }
+              while ! logged_in; do
+                sleep 10
+              done
+              while true; do
+                fly -t "$FLY_TARGET" set-pipeline -n -p merry-christmas -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" unpause-pipeline -p merry-christmas
+                sleep 30
+              done
+          env:
+            - name: CONCOURSE_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-username
+            - name: CONCOURSE_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-password
+          volumeMounts:
+            - name: concourse-pipeline
+              mountPath: /pipelines
+
       affinity:
       volumes:
         - name: concourse-keys
@@ -474,6 +513,158 @@ spec:
                 path: session_signing_key
               - key: worker-key-pub
                 path: worker_key.pub
+        - name: concourse-pipeline
+          configMap:
+            name: concourse-pipeline-config
+
+---
+# Concourse pipeline
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: concourse-pipeline-config
+  labels:
+    app: concourse-pipeline-updater
+    release: concourse
+data:
+  pipeline.yaml: |-
+    resources:
+      - name: 'x'
+        type: time
+        source:
+          interval: 20s
+        check_every: 20s
+      - name: 'y'
+        type: time
+        source:
+          interval: 2000h
+    jobs:
+      - name: +
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: false
+      - name: +=+=+=
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [19]
+      - name: =+=+=+=+=+=
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [10]
+      - name: +=+=+=+=+=+=+=+=+
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [19]
+      - name: =+=+=+=+=+=+=+=+=+=+=+
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [10]
+      - name: +=+=+=+=+=+=+=+=+=+=+=+=+=+=
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [19]
+      - name: =+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=+=
+        serial: true
+        plan:
+          - get: 'x'
+            trigger: true
+          - get: 'y'
+            trigger: true
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [10]
+      - name: +++
+        serial: true
+        plan:
+          - get: 'y'
+            trigger: true
+          - task: shine
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+              run:
+                path: sleep
+                args: [59]
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
@@ -637,4 +828,3 @@ spec:
 
 ---
 # Source: concourse/templates/web-ingress.yaml
-
