@@ -1,0 +1,5 @@
+FROM ubuntu:18.04
+RUN apt update
+RUN apt install wget -y
+RUN wget https://github.com/concourse/concourse/releases/download/v3.14.1/fly_linux_amd64 -O /usr/bin/fly
+RUN chmod +x /usr/bin/fly
