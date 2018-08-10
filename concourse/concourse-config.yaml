@@ -521,7 +521,7 @@ spec:
                 sleep 10
               done
               while true; do
-                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN=$KUBECTL_TOKEN -p kubernetes-pipeline -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="${KUBECTL_TOKEN}" -p kubernetes-pipeline -c /pipelines/pipeline.yaml
                 fly -t "$FLY_TARGET" unpause-pipeline -p kubernetes-pipeline
                 sleep 5
               done
@@ -602,8 +602,7 @@ data:
                 - -c
                 - |
                   kubectl
-                  echo $KUBECTL_TOKEN
-                  echo "Arsebiscuits"
+                  echo "kubetoken: " $KUBECTL_TOKEN
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
