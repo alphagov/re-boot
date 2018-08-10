@@ -603,6 +603,7 @@ data:
                 - |
                   kubectl
                   echo $KUBECTL_TOKEN
+                  echo "Arsebiscuits"
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
