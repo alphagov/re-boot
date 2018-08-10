@@ -5,7 +5,7 @@ name="$1"
 cluster_name="${name}.k8s.local"
 state_bucket='s3://gds-paas-k8s-shared-state'
 
-script_dir="$( realpath . )"
+script_dir="$(pwd)"
 
 function cluster_up () {
   kops validate cluster \
