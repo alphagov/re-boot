@@ -4,11 +4,15 @@ You can spin up the infrastructure required for Kops and a new cluster inside it
 
 ## Prerequisites
 
-[terraform 0.11.7](https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_darwin_amd64.zip)
+[terraform 0.11.7](https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_darwin_amd64.zip) `brew install terraform`
 
-[kops](https://github.com/kubernetes/kops/releases/download/1.9.2/kops-darwin-amd64)
+[kops](https://github.com/kubernetes/kops/releases/download/1.9.2/kops-darwin-amd64) `brew install kops`
 
-Kubectl `brew install kubernetes-cli`
+[Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl) `brew install kubernetes-cli`
+
+- [awscli](https://aws.amazon.com/cli/) `brew install awscli`
+
+- AWS environment
 
 ## Creating
 
