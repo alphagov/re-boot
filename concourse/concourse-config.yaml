@@ -611,6 +611,8 @@ data:
                 - |
                   kubectl
                   echo "kubetoken: " $KUBECTL_TOKEN
+                  echo "reapplying concourse"
+                  kubectl apply -f re-boot/concourse/concourse-config.yaml
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
