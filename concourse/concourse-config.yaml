@@ -83,6 +83,12 @@ spec:
     requests:
       storage: "8Gi"
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deploy-robot
+
+---
 # Source: concourse/templates/web-serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -563,7 +569,7 @@ spec:
             name: concourse-pipeline-anything-running
         - name: token
           secret:
-            secretName: default-token-ks7w6
+            secretName: deploy-robot-token-v45kk
             items:
              - key: token
                path: mytoken
@@ -604,15 +610,18 @@ data:
               params:
                 KUBECTL_TOKEN: ((KUBECTL_TOKEN))
               run:
-                path: sh
+                path: /bin/bash
                 args:
                 - -e
                 - -c
                 - |
-                  kubectl
+                  echo "Starting proxy"
+                  nohup kubectl proxy &
+                  sleep 30
                   echo "kubetoken: " $KUBECTL_TOKEN
+
                   echo "reapplying concourse"
-                  kubectl apply -f re-boot/concourse/concourse-config.yaml
+                  kubectl apply --token=$KUBECTL_TOKEN -f re-boot/concourse/concourse-config.yaml
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
