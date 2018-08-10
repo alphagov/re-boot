@@ -5,9 +5,6 @@ name="$1"
 cluster_name="${name}.k8s.local"
 state_bucket='s3://gds-paas-k8s-shared-state'
 
-: "$LOGIT_API_KEY"
-: "$LOGIT_ELASTICSEARCH_HOST"
-
 script_dir="$(pwd)"
 
 function cluster_up () {
@@ -45,20 +42,24 @@ echo '🔧  Installing Dashboard'
 kubectl apply -f "${script_dir}/mgmt/dashboard.yaml"
 echo '✅  Dashboard is installed'
 
-echo '🔧  Installing logging'
-# Use `kubectl create` to output YAML configuration, which is then applied.
-# We have to do this because `create` is not akin to upsert, so will fail
-# when run repeatedly.
-kubectl create secret generic logit \
-        --namespace kube-system \
-        --from-literal "logitApiKey=${LOGIT_API_KEY}" \
-        --from-literal "logitElasticsearchHost=${LOGIT_ELASTICSEARCH_HOST}" \
-        --output yaml \
-        --dry-run \
- | kubectl apply -f -
+if [ -n "${LOGIT_API_KEY}" ] && [ -n "${LOGIT_ELASTICSEARCH_HOST}" ]; then
+  echo '🔧  Installing logging'
+  # Use `kubectl create` to output YAML configuration, which is then applied.
+  # We have to do this because `create` is not akin to upsert, so will fail
+  # when run repeatedly.
+  kubectl create secret generic logit \
+          --namespace kube-system \
+          --from-literal "logitApiKey=${LOGIT_API_KEY}" \
+          --from-literal "logitElasticsearchHost=${LOGIT_ELASTICSEARCH_HOST}" \
+          --output yaml \
+          --dry-run \
+  | kubectl apply -f -
 
-kubectl apply -f "${script_dir}/mgmt/logging.yaml"
-echo '✅  Logging is installed'
+  kubectl apply -f "${script_dir}/mgmt/logging.yaml"
+  echo '✅  Logging is installed'
+else
+  echo '🤷 LOGIT_API_KEY and LOGIT_ELASTICSEARCH_HOST are not set. Skipping.'
+fi
 
 service_account_name="default"
 
