@@ -448,6 +448,40 @@ spec:
             httpGet:
               path: /
               port: atc
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/bash
+                - -c
+                - |-
+                  TARGET="cluster-name-irrelevant"
+                  PIPELINES=$(fly -t $TARGET pipelines | awk '{print $1}')
+
+                  function logged_in() {
+                    fly login \
+                      -c "http://localhost:8080/" \
+                      -k \
+                      -u "concourse" \
+                      -p "concourse" \
+                      -t "$TARGET"
+                  }
+                  while ! logged_in; do
+                    sleep 10
+                  done
+
+                  for PIPELINE in $PIPELINES; do
+                  JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
+                    for [ JOB in $JOBS ]; do
+                      if $JOB != "n/a"; then
+                      echo "Something running"
+                    else
+                      while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                        sleep 5
+                      done
+                    fi
+                    done
+                  done
             initialDelaySeconds: 120
             timeoutSeconds: 5
           readinessProbe:
