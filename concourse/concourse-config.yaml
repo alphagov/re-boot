@@ -424,7 +424,7 @@ spec:
             - name: KUBECTL_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: default-token-plx6l
+                  name: default-token-ks7w6
                   key: token
           readinessProbe:
             exec:
@@ -486,8 +486,10 @@ spec:
                 sleep 10
               done
               while true; do
-                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="$KUBECTL_TOKEN" -p merry-christmas -c /pipelines/pipeline.yaml
-                fly -t "$FLY_TARGET" unpause-pipeline -p merry-christmas
+                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="$KUBECTL_TOKEN" -p kubernetes-pipeline -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" unpause-pipeline -p kubernetes-pipeline
+                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="$KUBECTL_TOKEN" -p anything-running -c /pipeline-running/pipeline-running.yaml
+                fly -t "$FLY_TARGET" unpause-pipeline -p anything-running
                 sleep 5
               done
           env:
@@ -504,6 +506,8 @@ spec:
           volumeMounts:
             - name: concourse-pipeline
               mountPath: /pipelines
+            - name: concourse-pipeline-anything-running
+              mountPath: /pipeline-running
 
       affinity:
       volumes:
@@ -521,6 +525,9 @@ spec:
         - name: concourse-pipeline
           configMap:
             name: concourse-pipeline-config
+        - name: concourse-pipeline-anything-running
+          configMap:
+            name: concourse-pipeline-anything-running
 
 ---
 # Concourse pipeline
@@ -565,6 +572,75 @@ data:
                 - |
                   kubectl
                   echo $KUBECTL_TOKEN
+
+---
+# Concourse checking pipeline pipeline
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: concourse-pipeline-anything-running
+  labels:
+    app: concourse-pipeline-anything-running
+    release: concourse
+data:
+  pipeline-running.yaml: |-
+    resources:
+      - name: re-boot
+        type: git
+        source:
+          uri: https://github.com/alphagov/re-boot.git
+          branch: master
+    jobs:
+      - name: anything-running
+        serial: true
+        plan:
+          - get: re-boot
+            trigger: true
+          - task: deploy
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: leeporte/fly-cli
+                  tag: 3.14.1
+              inputs:
+                - name: re-boot
+              params:
+                CONCOURSE_USERNAME: "concourse"
+                CONCOURSE_PASSWORD: "concourse"
+              run:
+                path: /bin/bash
+                args:
+                - -e
+                - -c
+                - |
+                  TARGET="cluster-name-irrelevant"
+                  PIPELINES=$(fly -t $TARGET pipelines | awk '{print $1}')
+
+                  function logged_in() {
+                    fly login \
+                      -c "http://localhost:8080/" \
+                      -k \
+                      -u "concourse" \
+                      -p "concourse" \
+                      -t "$TARGET"
+                  }
+                  while ! logged_in; do
+                    sleep 10
+                  done
+
+                  for PIPELINE in $PIPELINES; do
+                    JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
+                    for [ JOB in $JOBS ]; do
+                      if $JOB != "n/a"; then
+                      echo "Something running"
+                    else
+                      echo "Nada running"
+                    fi
+                    done
+                  sleep 30
+                  done
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
