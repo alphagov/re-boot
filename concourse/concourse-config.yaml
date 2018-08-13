@@ -570,6 +570,21 @@ data:
         plan:
           - get: re-boot
             trigger: true
+          - task: say-hi
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+                  tag: latest
+              run:
+                path: /bin/ash
+                args:
+                - -e
+                - -c
+                - |
+                  echo "HELLO!"
           - task: deploy
             config:
               platform: linux
