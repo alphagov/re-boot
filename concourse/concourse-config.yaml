@@ -1,19 +1,4 @@
 ---
-# Source: concourse/templates/namespace.yaml
-
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  annotations:
-    "helm.sh/resource-policy": keep
-  name: concourse-main
-  labels:
-    app: concourse-concourse
-    chart: "concourse-1.15.0"
-    release: "concourse"
-    heritage: "Tiller"
----
 # Source: concourse/charts/postgresql/templates/secrets.yaml
 
 apiVersion: v1
@@ -82,11 +67,6 @@ spec:
   resources:
     requests:
       storage: "8Gi"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: deploy-robot
 
 ---
 # Source: concourse/templates/web-serviceaccount.yaml
@@ -103,6 +83,7 @@ metadata:
 # Source: concourse/templates/worker-serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
+automountServiceAccountToken: true
 metadata:
   name: concourse-worker
   labels:
@@ -150,10 +131,9 @@ rules:
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: concourse-web-main
-  namespace: concourse-main
   labels:
     app: concourse-web
     chart: concourse-1.15.0
@@ -162,15 +142,15 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: concourse-web
+  name: cluster-admin
 subjects:
 - kind: ServiceAccount
   name: concourse-web
-  namespace: concourse-main
+  namespace: default
 ---
 # Source: concourse/templates/worker-rolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: concourse-worker
   labels:
@@ -180,11 +160,12 @@ metadata:
     release: concourse
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: concourse-worker
+  kind: ClusterRole
+  name: cluster-admin
 subjects:
 - kind: ServiceAccount
   name: concourse-worker
+  namespace: default
 ---
 # Source: concourse/charts/postgresql/templates/svc.yaml
 apiVersion: v1
@@ -427,8 +408,6 @@ spec:
                   key: basic-auth-password
             - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
               value: concourse-
-            - name: KUBECTL_TOKEN
-              value: "/token/mytoken"
 
           readinessProbe:
             exec:
@@ -525,9 +504,15 @@ spec:
                 sleep 10
               done
               while true; do
-                DA_TOKEN=$(cat /token/mytoken)
-                echo "kubetoken: $DA_TOKEN"
-                fly -t "$FLY_TARGET" set-pipeline -n -v KUBECTL_TOKEN="${DA_TOKEN}" -p kubernetes-pipeline -c /pipelines/pipeline.yaml
+                DA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                DA_CA=$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)
+                DA_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+                fly -t "$FLY_TARGET" set-pipeline -n \
+                  -v KUBE_TOKEN="${DA_TOKEN}" \
+                  -v KUBE_CA="${DA_CA}" \
+                  -v KUBE_NAMESPACE="${DA_NAMESPACE}" \
+                  -p kubernetes-pipeline \
+                  -c /pipelines/pipeline.yaml
                 fly -t "$FLY_TARGET" unpause-pipeline -p kubernetes-pipeline
                 sleep 5
               done
@@ -545,9 +530,6 @@ spec:
           volumeMounts:
             - name: concourse-pipeline
               mountPath: /pipelines
-            - name: token
-              mountPath: /token
-              readOnly: true
       affinity:
       volumes:
         - name: concourse-keys
@@ -564,15 +546,6 @@ spec:
         - name: concourse-pipeline
           configMap:
             name: concourse-pipeline-config
-        - name: concourse-pipeline-anything-running
-          configMap:
-            name: concourse-pipeline-anything-running
-        - name: token
-          secret:
-            secretName: deploy-robot-token-v45kk
-            items:
-             - key: token
-               path: mytoken
 
 ---
 # Concourse pipeline
@@ -603,25 +576,40 @@ data:
               image_resource:
                 type: docker-image
                 source:
-                  repository: google/cloud-sdk
-                  tag: 206.0.0
+                  repository: lachlanevenson/k8s-kubectl
+                  tag: v1.11.2-bash
               inputs:
                 - name: re-boot
               params:
-                KUBECTL_TOKEN: ((KUBECTL_TOKEN))
+                KUBERNETES_PORT: tcp://100.64.0.1:443
+                KUBERNETES_PORT_443_TCP_PORT: 443
+                KUBERNETES_SERVICE_PORT: 443
+                KUBERNETES_SERVICE_HOST: 100.64.0.1
+                KUBERNETES_PORT_443_TCP_PROTO: tcp
+                KUBERNETES_SERVICE_PORT_HTTPS: 443
+                KUBERNETES_PORT_443_TCP_ADDR: 100.64.0.1
+                KUBERNETES_PORT_443_TCP: tcp://100.64.0.1:443
+
+                KUBE_CA: ((KUBE_CA))
+                KUBE_NAMESPACE: ((KUBE_NAMESPACE))
+                KUBE_TOKEN: ((KUBE_TOKEN))
+                KUBE_API_ADDRESS: 100.64.0.1
+                KUBE_API_PORT: 443
               run:
                 path: /bin/bash
                 args:
                 - -e
                 - -c
                 - |
-                  echo "Starting proxy"
-                  nohup kubectl proxy &
-                  sleep 30
-                  echo "kubetoken: " $KUBECTL_TOKEN
+                  echo "Reapplying concourse"
+                  echo "${KUBE_CA}" > /tmp/ca.crt
 
-                  echo "reapplying concourse"
-                  kubectl apply --token=$KUBECTL_TOKEN -f re-boot/concourse/concourse-config.yaml
+                    # --namespace="${KUBE_NAMESPACE}" \
+                  kubectl apply \
+                    --server="https://${KUBE_API_ADDRESS}:${KUBE_API_PORT}" \
+                    --token="${KUBE_TOKEN}" \
+                    --certificate-authority=/tmp/ca.crt \
+                    -f re-boot/concourse/concourse-config.yaml
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
@@ -652,7 +640,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: concourse-worker
-          image: "concourse/concourse:3.14.1"
+          image: "henryknott/concourse:latest"
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/sh
@@ -713,12 +701,13 @@ spec:
                     JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
                       for [ JOB in $JOBS ]; do
                         if $JOB != "n/a"; then
-                        echo "Something running"
-                      else
-                        while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                          echo "Something running"
                           sleep 5
-                        done
-                      fi
+                        else
+                          while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                            sleep 5
+                          done
+                        fi
                       done
                     done
 
