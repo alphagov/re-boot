@@ -3,7 +3,7 @@ kind: Workflow
 metadata:
   generateName: argo-deployment-workflow-
 spec:
-  entrypoint: argo
+  entrypoint: argo-apply
 
   templates:
   - name: argo-apply
@@ -16,13 +16,13 @@ spec:
             value: default
 
     - - name: argo-deploy
-        template: kubectl-create
+        template: argo-create
         arguments:
           parameters:
           - name: repo-manifest-dir
-            value: "re-boot/argo"
+            value: "argo"
           - name: repo-manifest-file
-            value: "argo.yml"
+            value: "argo.yaml"
 
     - - name: argo-up
         template: check-lb-service-up
@@ -43,7 +43,7 @@ spec:
       - name: ns-to-create
     container:
       image: docker.io/lachlanevenson/k8s-kubectl:v1.11.2-bash
-      command: ["/bin/sh", "-c"]
+      command: ["/bin/bash", "-c"]
       args: ["kubectl get namespace {{inputs.parameters.ns-to-create}}; RET=$?; if [ ${RET} -ne 0 ]; then kubectl create namespace {{inputs.parameters.ns-to-create}}; fi;"]
       imagePullPolicy: Always
 
@@ -51,16 +51,17 @@ spec:
     inputs:
       parameters:
       - name: repo-manifest-dir
+      - name: repo-manifest-file
       artifacts:
-      - name: git-artifact
+      - name: re-boot-source
         path: /src
         git:
-          repo: "https://github.com/alphagov/re-boot.git"
+          repo: "https://github.com/alphagov/re-boot"
           revision: "master"
     container:
       image: docker.io/lachlanevenson/k8s-kubectl:v1.11.2-bash
-      command: ["/bin/bashsh", "-c"]
-      args: ["kubectl create -f /src/{{inputs.parameters.repo-manifest-dir}}/{{inputs.parameters.repo-manifest-file}}"]
+      command: ["/bin/bash", "-c"]
+      args: ["cd /src && kubectl apply -f {{inputs.parameters.repo-manifest-dir}}/{{inputs.parameters.repo-manifest-file}}"]
       imagePullPolicy: Always
 
   - name: check-lb-service-up
