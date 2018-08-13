@@ -42,7 +42,7 @@ echo '🔧  Installing Dashboard'
 kubectl apply -f "${script_dir}/mgmt/dashboard.yaml"
 echo '✅  Dashboard is installed'
 
-if [ -n "${LOGIT_API_KEY}" ] && [ -n "${LOGIT_ELASTICSEARCH_HOST}" ]; then
+if [ ! -z ${LOGIT_API_KEY+x} ] && [ ! -z ${LOGIT_ELASTICSEARCH_HOST+x} ]; then
   echo '🔧  Installing logging'
   # Use `kubectl create` to output YAML configuration, which is then applied.
   # We have to do this because `create` is not akin to upsert, so will fail
