@@ -21,9 +21,9 @@ spec:
         arguments:
           parameters:
           - name: repo-manifest-dir
-            value: "argo"
+            value: "kops/mgmt/argo"
           - name: repo-manifest-file
-            value: "argo.yaml"
+            value: "001-argo.yaml"
 
     - - name: argo-up
         template: check-lb-service-up
