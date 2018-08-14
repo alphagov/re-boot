@@ -21,7 +21,7 @@ spec:
         arguments:
           parameters:
           - name: repo-manifest-dir
-            value: "kops/mgmt/argo"
+            value: "kops/argo"
           - name: repo-manifest-file
             value: "001-argo.yaml"
 

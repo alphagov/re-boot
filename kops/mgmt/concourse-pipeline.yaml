@@ -61,3 +61,23 @@ data:
                     --certificate-authority=/tmp/ca.crt \
                     -f re-boot/kops/mgmt \
                     -R
+            - task: argo-deploy
+              config:
+                platform: linux
+                image_resource:
+                  type: docker-image
+                  source:
+                    repository: docker.io/argoproj/argocli
+                    tag: v2.1.1
+                inputs:
+                  - name: re-boot
+                run:
+                  path: /bin/bash
+                  args:
+                  - -e
+                  - -c
+                  - |
+                    echo "Install Argo"
+                    argo install
+                    argo submit re-boot/kops/argo/001-argo-workflow.yaml
+                    argo submit re-boot/kops/argo/002-argo-deployment.yaml
