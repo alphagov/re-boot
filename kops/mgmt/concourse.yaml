@@ -349,11 +349,17 @@ spec:
         
       containers:
         - name: concourse-web
-          image: "henryknott/concourse:latest"
+          image: "leeporte/concourse:4.0.0"
           imagePullPolicy: "IfNotPresent"
           args:
             - "web"
             - "--kubernetes-in-cluster"
+            - "--add-local-user"
+            - $(CONCOURSE_BASIC_AUTH_USERNAME):$(CONCOURSE_BASIC_AUTH_PASSWORD)
+            - "--main-team-local-user"
+            - $(CONCOURSE_BASIC_AUTH_USERNAME)
+            - "--external-url"
+            - "http://concourse.longboy.govsvc.uk:8080"
           env:
             - name: CONCOURSE_TSA_HOST_KEY
               value: "/concourse-keys/host_key"
@@ -484,7 +490,7 @@ spec:
               mountPath: /concourse-keys
               readOnly: true
         - name: concourse-pipeline-updater
-          image: "leeporte/fly-cli:3.14.1"
+          image: "leeporte/fly-cli:4.0.0"
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/bash
@@ -548,6 +554,70 @@ spec:
             name: concourse-pipeline-config
 
 ---
+# Concourse pipeline
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: concourse-pipeline-config
+  labels:
+    app: concourse-pipeline-updater
+    release: concourse
+data:
+  pipeline.yaml: |-
+    resources:
+      - name: re-boot
+        type: git
+        source:
+          uri: https://github.com/alphagov/re-boot.git
+          branch: master
+    jobs:
+      - name: apply
+        serial: true
+        plan:
+          - get: re-boot
+            trigger: true
+          - task: self-update
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: lachlanevenson/k8s-kubectl
+                  tag: v1.11.2-bash
+              inputs:
+                - name: re-boot
+              params:
+                KUBERNETES_PORT: tcp://100.64.0.1:443
+                KUBERNETES_PORT_443_TCP_PORT: 443
+                KUBERNETES_SERVICE_PORT: 443
+                KUBERNETES_SERVICE_HOST: 100.64.0.1
+                KUBERNETES_PORT_443_TCP_PROTO: tcp
+                KUBERNETES_SERVICE_PORT_HTTPS: 443
+                KUBERNETES_PORT_443_TCP_ADDR: 100.64.0.1
+                KUBERNETES_PORT_443_TCP: tcp://100.64.0.1:443
+
+                KUBE_CA: ((KUBE_CA))
+                KUBE_NAMESPACE: ((KUBE_NAMESPACE))
+                KUBE_TOKEN: ((KUBE_TOKEN))
+                KUBE_API_ADDRESS: 100.64.0.1
+                KUBE_API_PORT: 443
+              run:
+                path: /bin/bash
+                args:
+                - -e
+                - -c
+                - |
+                  echo "Reapplying concourse"
+                  echo "${KUBE_CA}" > /tmp/ca.crt
+
+                  kubectl apply \
+                    --server="https://${KUBE_API_ADDRESS}:${KUBE_API_PORT}" \
+                    --token="${KUBE_TOKEN}" \
+                    --certificate-authority=/tmp/ca.crt \
+                    -f re-boot/kops/mgmt \
+                    -R
+
+---
 # Source: concourse/templates/worker-statefulset.yaml
 apiVersion: apps/v1beta1
 kind: StatefulSet
@@ -576,7 +646,7 @@ spec:
       terminationGracePeriodSeconds: 60
       containers:
         - name: concourse-worker
-          image: "henryknott/concourse:latest"
+          image: "leeporte/concourse:4.0.0"
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/sh
