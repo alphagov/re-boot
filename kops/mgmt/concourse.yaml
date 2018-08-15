@@ -198,7 +198,9 @@ metadata:
     chart: "concourse-1.15.0"
     release: "concourse"
     heritage: "Tiller"
+    dns: route53
   annotations:
+    external-dns.alpha.kubernetes.io/hostname: "concourse.longboy.govsvc.uk"
 spec:
   type: LoadBalancer
   
