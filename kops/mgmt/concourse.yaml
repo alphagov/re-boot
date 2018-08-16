@@ -200,7 +200,7 @@ metadata:
     heritage: "Tiller"
     dns: route53
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "concourse.longboy.govsvc.uk"
+    external-dns.alpha.kubernetes.io/hostname: "KUBECTL_CONCOURSE_URL"
 spec:
   type: LoadBalancer
   
@@ -361,7 +361,7 @@ spec:
             - "--main-team-local-user"
             - $(CONCOURSE_BASIC_AUTH_USERNAME)
             - "--external-url"
-            - "http://concourse.longboy.govsvc.uk:8080"
+            - "http://KUBECTL_CONCOURSE_URL:8080"
           env:
             - name: CONCOURSE_TSA_HOST_KEY
               value: "/concourse-keys/host_key"

@@ -7,6 +7,11 @@ state_bucket='s3://gds-paas-k8s-shared-state'
 
 script_dir="$(pwd)"
 
+: "$DEPLOY_ENV"
+
+owner_id=$(aws route53 list-hosted-zones-by-name --dns-name "${DEPLOY_ENV}.govsvc.uk." | jq -r '.HostedZones[0].Id')
+currentdns="aws route53 list-hosted-zones-by-name | jq -r '.HostedZones[].Name'"
+
 function cluster_up () {
   kops validate cluster \
        --name="${cluster_name}" \
@@ -28,6 +33,39 @@ if ! cluster_up; then
 fi
 
 echo '✅  Cluster is ready, proceeding'
+
+echo '    🔧  Setup DNS entry'
+if [ "${owner_id}" != "null" ]; then
+  echo "✅  Domain already exists"
+else
+  echo "🤷  Domain doesn't exist, creating"
+  aws route53 create-hosted-zone --name "${DEPLOY_ENV}.govsvc.uk." --caller-reference "external-dns-test-$(date +%s)"
+fi
+
+kops export kubecfg "${cluster_name}" --state="${state_bucket}"
+
+kops replace --state=${state_bucket} -f  <( \
+	spruce merge dns-iam.yaml \
+		<(kops get cluster ${cluster_name} --state=${state_bucket} -o yaml ) \
+)
+
+kops update cluster "${cluster_name}" --state=${state_bucket} --yes
+kops rolling-update cluster "${cluster_name}" --state=${state_bucket} --yes
+cp "${script_dir}/deploy-dns-pod.yaml" deploy-dns-pod-merged.yaml
+perl -pi -e s,--domain-filter=DNS,--domain-filter="${DEPLOY_ENV}.govsvc.uk",g deploy-dns-pod-merged.yaml
+perl -pi -e s,--txt-owner-id=OWNER,--txt-owner-id="${owner_id}",g deploy-dns-pod-merged.yaml
+
+kubectl apply -f "${script_dir}/deploy-dns.yaml"
+kubectl apply -f "${script_dir}/deploy-dns-pod-merged.yaml"
+rm deploy-dns-pod-merged.yaml
+echo '✅  DNS has been set up'
+
+echo '    🔧  Installing Concourse'
+cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
+perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${DEPLOY_ENV}.govsvc.uk",g concourse-merged.yaml
+kubectl apply -f concourse-merged.yaml
+rm concourse-merged.yaml
+echo '✅  Concourse is installed'
 
 echo '    🔧  Installing Vault'
 kubectl apply -f "${script_dir}/mgmt/vault-operator.yaml"
@@ -65,7 +103,7 @@ if [ ! -z ${LOGIT_API_KEY+x} ] && [ ! -z ${LOGIT_ELASTICSEARCH_HOST+x} ]; then
   kubectl apply -f "${script_dir}/mgmt/logging.yaml"
   echo '✅  Logging is installed'
 else
-  echo '🤷 LOGIT_API_KEY and LOGIT_ELASTICSEARCH_HOST are not set. Skipping.'
+  echo '🤷  LOGIT_API_KEY and LOGIT_ELASTICSEARCH_HOST are not set. Skipping.'
 fi
 
 service_account_name="default"
@@ -119,6 +157,11 @@ cat <<EOF
     🔑  You will be able to log in with the following token:
 
 $service_account_token
+
+✈️  Concourse
+    💻  concourse.${DEPLOY_ENV}.govsvc.uk:8080
+    😎  concourse
+    🔑  concourse
 
 📈  Grafana
     💻  ${grafana_url}/dashboards
