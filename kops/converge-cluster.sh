@@ -29,6 +29,13 @@ fi
 
 echo '✅  Cluster is ready, proceeding'
 
+echo '    🔧  Installing Vault'
+kubectl apply -f "${script_dir}/mgmt/vault-operator.yaml"
+echo '💤  Waiting for custom resources'
+sleep 10
+kubectl apply -f "${script_dir}/mgmt/vault-operator-deploy.yaml"
+echo '✅  Vault is installed'
+
 echo '🔧  Installing Prometheus'
 echo '    🔧  Installing Prometheus custom resources'
 kubectl apply -f "${script_dir}/mgmt/prometheus-custom-resources.yaml"
