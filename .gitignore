@@ -2,3 +2,6 @@
 *.tfstate
 *.backup
 .idea/
+ca.crt
+vault-keys.txt
+account-token.txt
