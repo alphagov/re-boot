@@ -3,12 +3,16 @@ set -ueo pipefail
 
 ## RUN IT ONLY ONCE
 
-kubectl -n default get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}' | xargs -0 -I {} kubectl -n default port-forward {} 8200
+/usr/bin/env bash -c 'kubectl -n default get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}' | xargs -0 -I {} kubectl -n default port-forward {} 8200' &
 export VAULT_ADDR='https://localhost:8200'
 export VAULT_SKIP_VERIFY="true"
 
-vault status
-vault operator init > vault-keys.txt
+sleep 30
+vault_status='$(curl http://127.0.0.1:8200/v1/sys/health)'
+if [ $vault_status == 501 ]; then
+    vault operator init | tee vault-keys.txt
+fi
+sleep 10
 vault operator unseal "$(cat vault-keys.txt | awk '/Unseal Key 1/ {print $NF}')"
 vault operator unseal "$(cat vault-keys.txt | awk '/Unseal Key 3/ {print $NF}')"
 vault operator unseal "$(cat vault-keys.txt | awk '/Unseal Key 5/ {print $NF}')"
@@ -16,7 +20,7 @@ export VAULT_TOKEN="$(cat vault-keys.txt | awk '/Initial Root Token/ {print $NF}
 vault login "${VAULT_TOKEN}"
 
 kubectl -n default create serviceaccount vault-tokenreview
-kubectl create -f kops/mgmt/vault-kubernetes-auth.yaml
+kubectl create -f mgmt/vault-kubernetes-auth.yaml
 export SECRET_NAME=$(kubectl -n default get serviceaccount vault-tokenreview -o jsonpath='{.secrets[0].name}')
 export TR_ACCOUNT_TOKEN=$(kubectl -n default get secret ${SECRET_NAME} -o jsonpath='{.data.token}' | base64 --decode)
 vault auth enable kubernetes
