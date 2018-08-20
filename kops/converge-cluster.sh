@@ -60,13 +60,6 @@ kubectl apply -f "${script_dir}/deploy-dns-pod-merged.yaml"
 rm deploy-dns-pod-merged.yaml
 echo '✅  DNS has been set up'
 
-echo '    🔧  Installing Concourse'
-cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
-perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${DEPLOY_ENV}.govsvc.uk",g concourse-merged.yaml
-kubectl apply -f concourse-merged.yaml
-rm concourse-merged.yaml
-echo '✅  Concourse is installed'
-
 echo '    🔧  Installing Vault'
 kubectl apply -f "${script_dir}/mgmt/vault-operator.yaml"
 echo '💤  Waiting for custom resources'
@@ -75,6 +68,16 @@ kubectl apply -f "${script_dir}/mgmt/vault-operator-deploy.yaml"
 echo '💤  Setting up Vault'
 sh ${script_dir}/setup-vault.sh
 echo '✅  Vault is installed'
+
+echo '    🔧  Installing Concourse'
+cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
+perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${DEPLOY_ENV}.govsvc.uk",g concourse-merged.yaml
+sed -i.bak s/\(\(VAULT_URL\)\)/vault-service.default.${name}.k8s.local/g concourse-merged.yaml
+sed -i.bak s#\(\(VAULT_CA_CERT\)\)#"$(pwd)/ca.crt"#g concourse-merged.yaml
+sed -i.bak s/\(\(VAULT_CLIENT_TOKEN\)\)/"$(cat account-token.txt)"/g concourse-merged.yaml
+kubectl apply -f concourse-merged.yaml
+rm concourse-merged.yaml concourse-merged.yaml.bak
+echo '✅  Concourse is installed'
 
 echo '🔧  Installing Prometheus'
 echo '    🔧  Installing Prometheus custom resources'

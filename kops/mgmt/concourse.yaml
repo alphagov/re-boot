@@ -416,6 +416,12 @@ spec:
                   key: basic-auth-password
             - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
               value: concourse-
+            - name: CONCOURSE_VAULT_URL
+              value: "((VAULT_URL))"
+            - name: CONCOURSE_VAULT_CA_CERT
+              value: "((VAULT_CA_CERT))"
+            - name: CONCOURSE_VAULT_CLIENT_TOKEN
+              value: "((VAULT_CLIENT_TOKEN))"
 
           readinessProbe:
             exec:
@@ -554,70 +560,6 @@ spec:
         - name: concourse-pipeline
           configMap:
             name: concourse-pipeline-config
-
----
-# Concourse pipeline
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: concourse-pipeline-config
-  labels:
-    app: concourse-pipeline-updater
-    release: concourse
-data:
-  pipeline.yaml: |-
-    resources:
-      - name: re-boot
-        type: git
-        source:
-          uri: https://github.com/alphagov/re-boot.git
-          branch: master
-    jobs:
-      - name: apply
-        serial: true
-        plan:
-          - get: re-boot
-            trigger: true
-          - task: self-update
-            config:
-              platform: linux
-              image_resource:
-                type: docker-image
-                source:
-                  repository: lachlanevenson/k8s-kubectl
-                  tag: v1.11.2-bash
-              inputs:
-                - name: re-boot
-              params:
-                KUBERNETES_PORT: tcp://100.64.0.1:443
-                KUBERNETES_PORT_443_TCP_PORT: 443
-                KUBERNETES_SERVICE_PORT: 443
-                KUBERNETES_SERVICE_HOST: 100.64.0.1
-                KUBERNETES_PORT_443_TCP_PROTO: tcp
-                KUBERNETES_SERVICE_PORT_HTTPS: 443
-                KUBERNETES_PORT_443_TCP_ADDR: 100.64.0.1
-                KUBERNETES_PORT_443_TCP: tcp://100.64.0.1:443
-
-                KUBE_CA: ((KUBE_CA))
-                KUBE_NAMESPACE: ((KUBE_NAMESPACE))
-                KUBE_TOKEN: ((KUBE_TOKEN))
-                KUBE_API_ADDRESS: 100.64.0.1
-                KUBE_API_PORT: 443
-              run:
-                path: /bin/bash
-                args:
-                - -e
-                - -c
-                - |
-                  echo "Reapplying concourse"
-                  echo "${KUBE_CA}" > /tmp/ca.crt
-
-                  kubectl apply \
-                    --server="https://${KUBE_API_ADDRESS}:${KUBE_API_PORT}" \
-                    --token="${KUBE_TOKEN}" \
-                    --certificate-authority=/tmp/ca.crt \
-                    -f re-boot/kops/mgmt \
-                    -R
 
 ---
 # Source: concourse/templates/worker-statefulset.yaml
