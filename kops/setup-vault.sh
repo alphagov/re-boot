@@ -30,6 +30,7 @@ export TR_ACCOUNT_TOKEN=$(kubectl -n default get secret ${SECRET_NAME} -o jsonpa
 vault auth enable kubernetes
 cat ~/.kube/kubeconfig | awk '/certificate-authority-data/ {print $NF}' | base64 -D > ca.crt
 vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert=@ca.crt token_reviewer_jwt=$TR_ACCOUNT_TOKEN
+vault mount -path=/concourse -description="Secrets for concourse pipelines" generic
 
 vault write sys/policy/concourse-policy policy=@mgmt/vault-policies.hcl
 vault write auth/kubernetes/role/concourse-role \
