@@ -21,6 +21,25 @@ data:
         plan:
           - get: re-boot
             trigger: true
+          - task: say-hello
+            config:
+              platform: linux
+              image_resource:
+                type: docker-image
+                source:
+                  repository: alpine
+                  tag: latest
+              inputs:
+                - name: re-boot
+              params:
+                SECRET_GREETER: ((greeter.hello))
+              run:
+                path: /bin/ash
+                args:
+                - -e
+                - -c
+                - |
+                  echo "${SECRET_GREETER}"
           - task: self-update
             config:
               platform: linux
