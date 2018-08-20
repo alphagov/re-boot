@@ -31,7 +31,7 @@ vault auth enable kubernetes
 cat ~/.kube/kubeconfig | awk '/certificate-authority-data/ {print $NF}' | base64 -D > ca.crt
 vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert=@ca.crt token_reviewer_jwt=$TR_ACCOUNT_TOKEN
 
-vault write sys/policy/concourse-policy policy=@vault-policies.hcl
+vault write sys/policy/concourse-policy policy=@mgmt/vault-policies.hcl
 vault write auth/kubernetes/role/concourse-role \
     bound_service_account_names=default \
     bound_service_account_namespaces=default \
