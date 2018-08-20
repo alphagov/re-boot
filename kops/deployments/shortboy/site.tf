@@ -1,5 +1,15 @@
-variable "env" {
-  default = "shortboy.k8s.local"
+variable "env" {}
+
+variable "root_domain" {
+  default = "govsvc.uk"
+}
+
+locals {
+  domain_name = "${var.env}.${var.root_domain}"
+}
+
+data "aws_route53_zone" "root" {
+  name         = "${var.root_domain}."
 }
 
 variable "region" {
@@ -94,6 +104,20 @@ resource "aws_route_table_association" "rta" {
   route_table_id = "${aws_route_table.rt.id}"
 }
 
+resource "aws_route53_zone" "domain" {
+  name = "${local.domain_name}"
+
+  force_destroy = true
+}
+
+resource "aws_route53_record" "ns" {
+  zone_id = "${data.aws_route53_zone.root.zone_id}"
+  name    = "${local.domain_name}"
+  type    = "NS"
+  ttl     = "60"
+  records = ["${aws_route53_zone.domain.name_servers}"]
+}
+
 output "vpc_id" {
   value = "${aws_vpc.vpc.id}"
 }
@@ -104,4 +128,12 @@ output "subnet_ids" {
 
 output "azs" {
   value = "${join(",", var.azs)}"
+}
+
+output "domain_name" {
+  value = "${aws_route53_zone.domain.name}"
+}
+
+output "domain_zone_id" {
+  value = "${aws_route53_zone.domain.zone_id}"
 }

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -ueo pipefail
 
-name="$1"
+env_name="$1"
+cluster_name="${env_name}.k8s.local"
 
-cd "deployments/${name}"
+cd "deployments/${env_name}"
 terraform init
-terraform apply
+terraform apply -var "env=${env_name}"
 
 vpc_id="$(terraform output vpc_id)"
 subnet_ids="$(terraform output subnet_ids)"
@@ -21,7 +22,7 @@ echo "$subnet_ids"
 echo "$azs"
 
 kops create cluster \
-     --name="${name}.k8s.local" \
+     --name="$cluster_name" \
      --state=s3://gds-paas-k8s-shared-state \
      --networking flannel \
      --cloud=aws \

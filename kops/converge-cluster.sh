@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 set -ueo pipefail
 
-name="$1"
-cluster_name="${name}.k8s.local"
+env_name="$1"
+cluster_name="${env_name}.k8s.local"
 state_bucket='s3://gds-paas-k8s-shared-state'
 
-script_dir="$(pwd)"
+script_dir="$PWD"
 
-: "$DEPLOY_ENV"
-
-owner_id=$(aws route53 list-hosted-zones-by-name --dns-name "${DEPLOY_ENV}.govsvc.uk." | jq -r '.HostedZones[0].Id')
-currentdns="aws route53 list-hosted-zones-by-name | jq -r '.HostedZones[].Name'"
+cd "deployments/${env_name}"
+domain_name="$(terraform output domain_name)"
+domain_zone_id="$(terraform output domain_zone_id)"
+cd -
+domain_name="${domain_name/.*=/}"
+domain_name="${domain_name%.}" # remove dot at end of zone
+domain_zone_id="${domain_zone_id/.*=/}"
+domain_owner_id="/hostedzone/${domain_zone_id}"
 
 function cluster_up () {
   kops validate cluster \
@@ -34,14 +38,6 @@ fi
 
 echo '✅  Cluster is ready, proceeding'
 
-echo '    🔧  Setup DNS entry'
-if [ "${owner_id}" != "null" ]; then
-  echo "✅  Domain already exists"
-else
-  echo "🤷  Domain doesn't exist, creating"
-  aws route53 create-hosted-zone --name "${DEPLOY_ENV}.govsvc.uk." --caller-reference "external-dns-test-$(date +%s)"
-fi
-
 kops export kubecfg "${cluster_name}" --state="${state_bucket}"
 
 kops replace --state=${state_bucket} -f  <( \
@@ -52,13 +48,20 @@ kops replace --state=${state_bucket} -f  <( \
 kops update cluster "${cluster_name}" --state=${state_bucket} --yes
 kops rolling-update cluster "${cluster_name}" --state=${state_bucket} --yes
 cp "${script_dir}/deploy-dns-pod.yaml" deploy-dns-pod-merged.yaml
-perl -pi -e s,--domain-filter=DNS,--domain-filter="${DEPLOY_ENV}.govsvc.uk",g deploy-dns-pod-merged.yaml
-perl -pi -e s,--txt-owner-id=OWNER,--txt-owner-id="${owner_id}",g deploy-dns-pod-merged.yaml
+perl -pi -e s,--domain-filter=DNS,--domain-filter="${domain_name}",g deploy-dns-pod-merged.yaml
+perl -pi -e s,--txt-owner-id=OWNER,--txt-owner-id="${domain_owner_id}",g deploy-dns-pod-merged.yaml
 
 kubectl apply -f "${script_dir}/deploy-dns.yaml"
 kubectl apply -f "${script_dir}/deploy-dns-pod-merged.yaml"
 rm deploy-dns-pod-merged.yaml
 echo '✅  DNS has been set up'
+
+echo '    🔧  Installing Concourse'
+cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
+perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${domain_name}",g concourse-merged.yaml
+kubectl apply -f concourse-merged.yaml
+rm concourse-merged.yaml
+echo '✅  Concourse is installed'
 
 echo '    🔧  Installing Vault'
 kubectl apply -f "${script_dir}/mgmt/vault-operator.yaml"
@@ -164,7 +167,7 @@ cat <<EOF
 $service_account_token
 
 ✈️  Concourse
-    💻  concourse.${DEPLOY_ENV}.govsvc.uk:8080
+    💻  http://concourse.${domain_name}:8080
     😎  concourse
     🔑  concourse
 
