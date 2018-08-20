@@ -73,7 +73,7 @@ echo '💤  Waiting for custom resources'
 sleep 10
 kubectl apply -f "${script_dir}/mgmt/vault-operator-deploy.yaml"
 echo '💤  Setting up Vault'
-sh ${script_dir}/setup_vault.sh
+sh ${script_dir}/setup-vault.sh
 echo '✅  Vault is installed'
 
 echo '🔧  Installing Prometheus'
