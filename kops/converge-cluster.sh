@@ -56,13 +56,6 @@ kubectl apply -f "${script_dir}/deploy-dns-pod-merged.yaml"
 rm deploy-dns-pod-merged.yaml
 echo '✅  DNS has been set up'
 
-echo '    🔧  Installing Concourse'
-cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
-perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${domain_name}",g concourse-merged.yaml
-kubectl apply -f concourse-merged.yaml
-rm concourse-merged.yaml
-echo '✅  Concourse is installed'
-
 echo '    🔧  Installing Vault'
 kubectl apply -f "${script_dir}/mgmt/vault-operator.yaml"
 echo '💤  Waiting for custom resources'

@@ -3,7 +3,7 @@ set -ueo pipefail
 
 ## RUN IT ONLY ONCE
 
-/usr/bin/env bash -c "kubectl -n default get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}' | xargs -0 -I {} kubectl -n default port-forward {} 8200" &
+kubectl -n default get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}' | xargs -0 -I {} kubectl -n default port-forward {} 8200 &
 export VAULT_ADDR="https://localhost:8200"
 export VAULT_SKIP_VERIFY="true"
 
@@ -23,17 +23,15 @@ if [ $vault_status == 503 ]; then
 fi
 vault login "$(cat vault-keys.txt | awk '/Initial Root Token/ {print $NF}')"
 
-CHECK_SERVICEACCOUNT=$(kubectl -n default get serviceaccount vault-tokenreview -o jsonpath='{.metadata.name}')
-if [ $CHECK_SERVICEACCOUNT != "vault-tokenreview" ]; then
-    kubectl -n default create serviceaccount vault-tokenreview
-fi
+kubectl -n default create serviceaccount vault-tokenreview
+
 kubectl create -f mgmt/vault-kubernetes-auth.yaml
 export SECRET_NAME=$(kubectl -n default get serviceaccount vault-tokenreview -o jsonpath='{.secrets[0].name}')
 export TR_ACCOUNT_TOKEN=$(kubectl -n default get secret ${SECRET_NAME} -o jsonpath='{.data.token}' | base64 --decode)
 vault auth enable kubernetes
 cat ~/.kube/config | awk '/certificate-authority-data/ {print $NF}' | base64 -D > ca.crt
 vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert=@ca.crt token_reviewer_jwt=$TR_ACCOUNT_TOKEN
-vault mount -path=/concourse -description="Secrets for concourse pipelines" generic
+vault secrets enable -path=/concourse -description="Secrets for concourse pipelines" generic
 
 vault write sys/policy/concourse-policy policy=@mgmt/vault-policies.hcl
 vault write auth/kubernetes/role/concourse-role \
