@@ -68,7 +68,7 @@ echo '✅  Vault is installed'
 echo '    🔧  Installing Concourse'
 cp "${script_dir}/mgmt/concourse.yaml" concourse-merged.yaml
 perl -pi -e s,KUBECTL_CONCOURSE_URL,"concourse.${DEPLOY_ENV}.govsvc.uk",g concourse-merged.yaml
-sed -i.bak s#\(\(VAULT_URL\)\)#"https://100.68.214.196:8200/"#g concourse-merged.yaml
+sed -i.bak s#\(\(VAULT_URL\)\)#"https://vault-service.default.svc.cluster.local:8200/"#g concourse-merged.yaml
 sed -i.bak s#\(\(VAULT_CA_CERT\)\)#"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"#g concourse-merged.yaml
 sed -i.bak s/\(\(VAULT_CLIENT_TOKEN\)\)/"$(cat account-token.txt)"/g concourse-merged.yaml
 kubectl apply -f concourse-merged.yaml

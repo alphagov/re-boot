@@ -44,4 +44,4 @@ export SECRET_NAME=$(kubectl -n default get serviceaccount default -o jsonpath='
 export DEFAULT_ACCOUNT_TOKEN=$(kubectl -n default get secret ${SECRET_NAME} -o jsonpath='{.data.token}' | base64 --decode)
 vault write auth/kubernetes/login role=concourse-role jwt=${DEFAULT_ACCOUNT_TOKEN}
 
-echo "${DEFAULT_ACCOUNT_TOKEN}" > account-token.txt
+echo "$(vault token-create --policy=policy-concourse -period="600h" -format=json | jq -r .auth.client_token)" > account-token.txt

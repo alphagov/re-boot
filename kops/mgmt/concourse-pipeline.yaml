@@ -39,7 +39,7 @@ data:
                 - -e
                 - -c
                 - |
-                  echo "${SECRET_GREETER}"
+                  echo "hello, ${SECRET_GREETER}"
           - task: self-update
             config:
               platform: linux

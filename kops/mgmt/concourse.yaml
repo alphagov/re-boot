@@ -422,6 +422,8 @@ spec:
               value: "((VAULT_CA_CERT))"
             - name: CONCOURSE_VAULT_CLIENT_TOKEN
               value: "((VAULT_CLIENT_TOKEN))"
+            - name: CONCOURSE_VAULT_INSECURE_SKIP_VERIFY
+              value: "true"
 
           readinessProbe:
             exec:
