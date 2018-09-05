@@ -1,0 +1,153 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.16.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: saml-engine
+  name: saml-engine
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: saml-engine
+    spec:
+      containers:
+      - env:
+        - name: APP_NAME
+          value: saml-engine
+        - name: CONFIG_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CONFIG_URL
+              name: saml-engine-urls-env
+        - name: COUNTRY_EXPECTED_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: COUNTRY_EXPECTED_ENTITY_ID
+              name: saml-engine-urls-env
+        - name: COUNTRY_METADATA_URI
+          valueFrom:
+            configMapKeyRef:
+              key: COUNTRY_METADATA_URI
+              name: saml-engine-urls-env
+        - name: DB_URI
+          valueFrom:
+            configMapKeyRef:
+              key: DB_URI
+              name: saml-engine-urls-env
+        - name: EIDAS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: EIDAS_ENABLED
+              name: saml-engine-urls-env
+        - name: EUROPEAN_IDENTITY_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: EUROPEAN_IDENTITY_ENABLED
+              name: saml-engine-urls-env
+        - name: EVENT_SINK_URL
+          valueFrom:
+            configMapKeyRef:
+              key: EVENT_SINK_URL
+              name: saml-engine-urls-env
+        - name: FRONTEND_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: FRONTEND_EXTERNAL_PORT
+              name: saml-engine-urls-env
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              key: FRONTEND_URL
+              name: saml-engine-urls-env
+        - name: HUB_CONNECTOR_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: HUB_CONNECTOR_ENTITY_ID
+              name: saml-engine-urls-env
+        - name: METADATA_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_ENTITY_ID
+              name: saml-engine-urls-env
+        - name: METADATA_SOURCE_URI
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_SOURCE_URI
+              name: saml-engine-urls-env
+        - name: METADATA_URL
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_URL
+              name: saml-engine-urls-env
+        - name: MSA_URL
+          valueFrom:
+            configMapKeyRef:
+              key: MSA_URL
+              name: saml-engine-urls-env
+        - name: POLICY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: POLICY_URL
+              name: saml-engine-urls-env
+        - name: RP_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: RP_SERVICE_URL
+              name: saml-engine-urls-env
+        - name: SAML_ENGINE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_ENGINE_URL
+              name: saml-engine-urls-env
+        - name: SAML_PROXY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_PROXY_URL
+              name: saml-engine-urls-env
+        - name: SAML_SOAP_PROXY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_SOAP_PROXY_URL
+              name: saml-engine-urls-env
+        - name: STUB_IDP_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_EXTERNAL_PORT
+              name: saml-engine-urls-env
+        - name: STUB_IDP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_URL
+              name: saml-engine-urls-env
+        - name: TEST_RP_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: TEST_RP_EXTERNAL_PORT
+              name: saml-engine-urls-env
+        - name: TEST_RP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: TEST_RP_URL
+              name: saml-engine-urls-env
+        - name: TRUST_ANCHOR_URL
+          valueFrom:
+            configMapKeyRef:
+              key: TRUST_ANCHOR_URL
+              name: saml-engine-urls-env
+        - name: VSP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: VSP_URL
+              name: saml-engine-urls-env
+        image: saml-engine
+        name: saml-engine
+        resources: {}
+      restartPolicy: Always
+status: {}

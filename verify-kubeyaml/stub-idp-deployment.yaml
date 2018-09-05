@@ -1,0 +1,214 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.16.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: stub-idp
+  name: stub-idp
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: stub-idp
+    spec:
+      containers:
+      - env:
+        - name: CERT_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: CERT_TYPE
+              name: stub-idp-stub-idp-env
+        - name: CONFIG_URL
+          valueFrom:
+            configMapKeyRef:
+              key: CONFIG_URL
+              name: stub-idp-urls-env
+        - name: COUNTRY_EXPECTED_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: COUNTRY_EXPECTED_ENTITY_ID
+              name: stub-idp-urls-env
+        - name: COUNTRY_METADATA_URI
+          valueFrom:
+            configMapKeyRef:
+              key: COUNTRY_METADATA_URI
+              name: stub-idp-urls-env
+        - name: DB_URI
+          valueFrom:
+            configMapKeyRef:
+              key: DB_URI
+              name: stub-idp-urls-env
+        - name: EIDAS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: EIDAS_ENABLED
+              name: stub-idp-urls-env
+        - name: ENTITY_ID
+          value: http://%s.local/SSO/POST
+        - name: EUROPEAN_IDENTITY_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: EUROPEAN_IDENTITY_ENABLED
+              name: stub-idp-urls-env
+        - name: EVENT_SINK_URL
+          valueFrom:
+            configMapKeyRef:
+              key: EVENT_SINK_URL
+              name: stub-idp-urls-env
+        - name: FRONTEND_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: FRONTEND_EXTERNAL_PORT
+              name: stub-idp-urls-env
+        - name: FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              key: FRONTEND_URL
+              name: stub-idp-urls-env
+        - name: GRAPHITE_REPORTING_FREQUENCY
+          value: 24h
+        - name: HUB_CONNECTOR_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: HUB_CONNECTOR_ENTITY_ID
+              name: stub-idp-urls-env
+        - name: KEY_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: KEY_TYPE
+              name: stub-idp-stub-idp-env
+        - name: LOG_PATH
+          value: /app/logs
+        - name: METADATA_ENTITY_ID
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_ENTITY_ID
+              name: stub-idp-urls-env
+        - name: METADATA_SOURCE_URI
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_SOURCE_URI
+              name: stub-idp-urls-env
+        - name: METADATA_TRUSTSTORE
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_TRUSTSTORE
+              name: stub-idp-stub-idp-env
+        - name: METADATA_URL
+          valueFrom:
+            configMapKeyRef:
+              key: METADATA_URL
+              name: stub-idp-urls-env
+        - name: MSA_URL
+          valueFrom:
+            configMapKeyRef:
+              key: MSA_URL
+              name: stub-idp-urls-env
+        - name: POLICY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: POLICY_URL
+              name: stub-idp-urls-env
+        - name: PORT
+          value: "80"
+        - name: RP_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: RP_SERVICE_URL
+              name: stub-idp-urls-env
+        - name: SAML_ENGINE_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_ENGINE_URL
+              name: stub-idp-urls-env
+        - name: SAML_PROXY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_PROXY_URL
+              name: stub-idp-urls-env
+        - name: SAML_SOAP_PROXY_URL
+          valueFrom:
+            configMapKeyRef:
+              key: SAML_SOAP_PROXY_URL
+              name: stub-idp-urls-env
+        - name: STUB_COUNTRY_SIGNING_CERT
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_COUNTRY_SIGNING_CERT
+              name: stub-idp-stub-idp-env
+        - name: STUB_COUNTRY_SIGNING_PRIVATE_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_COUNTRY_SIGNING_PRIVATE_KEY
+              name: stub-idp-stub-idp-env
+        - name: STUB_IDPS_FILE_PATH
+          value: /idps/stub-idps.yml
+        - name: STUB_IDP_ASSET_LOCATION
+          value: /assets
+        - name: STUB_IDP_BASIC_AUTH
+          value: "false"
+        - name: STUB_IDP_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_EXTERNAL_PORT
+              name: stub-idp-urls-env
+        - name: STUB_IDP_SIGNING_CERT
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_SIGNING_CERT
+              name: stub-idp-stub-idp-env
+        - name: STUB_IDP_SIGNING_PRIVATE_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_SIGNING_PRIVATE_KEY
+              name: stub-idp-stub-idp-env
+        - name: STUB_IDP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: STUB_IDP_URL
+              name: stub-idp-urls-env
+        - name: STUB_IDP_YAML_FILE_LOCATION
+          value: /idps/stub-idps.yml
+        - name: TEST_RP_EXTERNAL_PORT
+          valueFrom:
+            configMapKeyRef:
+              key: TEST_RP_EXTERNAL_PORT
+              name: stub-idp-urls-env
+        - name: TEST_RP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: TEST_RP_URL
+              name: stub-idp-urls-env
+        - name: TRUSTSTORE_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              key: TRUSTSTORE_PASSWORD
+              name: stub-idp-stub-idp-env
+        - name: TRUSTSTORE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: TRUSTSTORE_TYPE
+              name: stub-idp-stub-idp-env
+        - name: TRUST_ANCHOR_URL
+          valueFrom:
+            configMapKeyRef:
+              key: TRUST_ANCHOR_URL
+              name: stub-idp-urls-env
+        - name: VSP_URL
+          valueFrom:
+            configMapKeyRef:
+              key: VSP_URL
+              name: stub-idp-urls-env
+        image: stub-idp
+        name: stub-idp
+        ports:
+        - containerPort: 80
+        resources: {}
+      restartPolicy: Always
+status: {}

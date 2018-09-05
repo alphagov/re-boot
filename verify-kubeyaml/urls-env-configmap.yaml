@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: urls-env
+data:
+  CONFIG_URL: http://config
+  COUNTRY_EXPECTED_ENTITY_ID: http://localhost:56002/ServiceMetadata
+  COUNTRY_METADATA_URI: http://localhost:56002/ServiceMetadata
+  DB_URI: jdbc:postgresql://stub-idp-db:5432/postgres?user=postgres&password=password
+  EIDAS_ENABLED: "false"
+  EUROPEAN_IDENTITY_ENABLED: "false"
+  EVENT_SINK_URL: http://stub-event-sink
+  FRONTEND_EXTERNAL_PORT: "50300"
+  FRONTEND_URL: http://localhost:50300
+  HUB_CONNECTOR_ENTITY_ID: http://localhost:55000/local-connector/metadata.xml
+  METADATA_ENTITY_ID: https://dev-hub.local
+  METADATA_SOURCE_URI: http://not-used
+  METADATA_URL: http://metadata/dev.xml
+  MSA_URL: http://msa
+  POLICY_URL: http://policy
+  RP_SERVICE_URL: http://rp-service
+  SAML_ENGINE_URL: http://saml-engine
+  SAML_PROXY_URL: http://saml-proxy
+  SAML_SOAP_PROXY_URL: http://saml-soap-proxy
+  STUB_IDP_EXTERNAL_PORT: "50140"
+  STUB_IDP_URL: http://localhost:50140
+  TEST_RP_EXTERNAL_PORT: "50130"
+  TEST_RP_URL: http://localhost:50130
+  TRUST_ANCHOR_URL: http://not-used
+  VSP_URL: http://vsp

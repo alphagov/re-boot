@@ -1,0 +1,151 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.16.0 ()
+  creationTimestamp: null
+  labels:
+    io.kompose.service: frontend
+  name: frontend
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: frontend
+    spec:
+      containers:
+      - env:
+        - name: AB_TEST_FILE
+          valueFrom:
+            configMapKeyRef:
+              key: AB_TEST_FILE
+              name: frontend-configuration-frontend-env
+        - name: CONFIG_API_HOST
+        - name: COUNTRY_DISPLAY_LOCALES
+          valueFrom:
+            configMapKeyRef:
+              key: COUNTRY_DISPLAY_LOCALES
+              name: frontend-configuration-frontend-env
+        - name: CYCLE_3_DISPLAY_LOCALES
+          valueFrom:
+            configMapKeyRef:
+              key: CYCLE_3_DISPLAY_LOCALES
+              name: frontend-configuration-frontend-env
+        - name: CYCLE_THREE_ATTRIBUTES_DIRECTORY
+          valueFrom:
+            configMapKeyRef:
+              key: CYCLE_THREE_ATTRIBUTES_DIRECTORY
+              name: frontend-configuration-frontend-env
+        - name: IDP_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: IDP_CONFIG
+              name: frontend-configuration-frontend-env
+        - name: IDP_DISPLAY_LOCALES
+          valueFrom:
+            configMapKeyRef:
+              key: IDP_DISPLAY_LOCALES
+              name: frontend-configuration-frontend-env
+        - name: INTERNAL_PIWIK_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: INTERNAL_PIWIK_HOST
+              name: frontend-configuration-frontend-env
+        - name: LOGO_DIRECTORY
+          valueFrom:
+            configMapKeyRef:
+              key: LOGO_DIRECTORY
+              name: frontend-configuration-frontend-env
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              key: LOG_LEVEL
+              name: frontend-configuration-frontend-env
+        - name: METRICS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: METRICS_ENABLED
+              name: frontend-configuration-frontend-env
+        - name: PIWIK_SITE_ID
+          valueFrom:
+            configMapKeyRef:
+              key: PIWIK_SITE_ID
+              name: frontend-configuration-frontend-env
+        - name: POLICY_HOST
+        - name: POLLING_WAIT_TIME
+          valueFrom:
+            configMapKeyRef:
+              key: POLLING_WAIT_TIME
+              name: frontend-configuration-frontend-env
+        - name: PUBLIC_PIWIK_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: PUBLIC_PIWIK_HOST
+              name: frontend-configuration-frontend-env
+        - name: RP_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              key: RP_CONFIG
+              name: frontend-configuration-frontend-env
+        - name: RP_DISPLAY_LOCALES
+          valueFrom:
+            configMapKeyRef:
+              key: RP_DISPLAY_LOCALES
+              name: frontend-configuration-frontend-env
+        - name: RULES_DIRECTORY
+          valueFrom:
+            configMapKeyRef:
+              key: RULES_DIRECTORY
+              name: frontend-configuration-frontend-env
+        - name: SAML_PROXY_HOST
+        - name: SEGMENT_DEFINITIONS
+          valueFrom:
+            configMapKeyRef:
+              key: SEGMENT_DEFINITIONS
+              name: frontend-configuration-frontend-env
+        - name: SESSION_COOKIE_DURATION_IN_HOURS
+          valueFrom:
+            configMapKeyRef:
+              key: SESSION_COOKIE_DURATION_IN_HOURS
+              name: frontend-configuration-frontend-env
+        - name: VERIFY_PRODUCT_PAGE
+          valueFrom:
+            configMapKeyRef:
+              key: VERIFY_PRODUCT_PAGE
+              name: frontend-configuration-frontend-env
+        - name: WHITE_LOGO_DIRECTORY
+          valueFrom:
+            configMapKeyRef:
+              key: WHITE_LOGO_DIRECTORY
+              name: frontend-configuration-frontend-env
+        - name: ZDD_LATCH
+          valueFrom:
+            configMapKeyRef:
+              key: ZDD_LATCH
+              name: frontend-configuration-frontend-env
+        - name: ZENDESK_TOKEN
+          valueFrom:
+            configMapKeyRef:
+              key: ZENDESK_TOKEN
+              name: frontend-configuration-frontend-env
+        - name: ZENDESK_URL
+          valueFrom:
+            configMapKeyRef:
+              key: ZENDESK_URL
+              name: frontend-configuration-frontend-env
+        - name: ZENDESK_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              key: ZENDESK_USERNAME
+              name: frontend-configuration-frontend-env
+        image: frontend
+        name: frontend
+        ports:
+        - containerPort: 80
+        resources: {}
+      restartPolicy: Always
+status: {}

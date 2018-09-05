@@ -1,0 +1,32 @@
+apiVersion: v1
+data:
+  AB_TEST_FILE: /fed-config/ab_test.yml
+  COUNTRY_DISPLAY_LOCALES: /fed-config/locales/countries
+  CYCLE_3_DISPLAY_LOCALES: /fed-config/locales/cycle3
+  CYCLE_THREE_ATTRIBUTES_DIRECTORY: /fed-config/attributes
+  IDP_CONFIG: /fed-config/identity_providers.yml
+  IDP_DISPLAY_LOCALES: /fed-config/locales/idps
+  INTERNAL_PIWIK_HOST: https://localhost:1235/piwik.php
+  LOG_LEVEL: debug
+  LOGO_DIRECTORY: /stub-logos
+  METRICS_ENABLED: "false"
+  PIWIK_SITE_ID: "1"
+  POLLING_WAIT_TIME: "2"
+  PUBLIC_PIWIK_HOST: http://localhost:50300/analytics
+  RP_CONFIG: /fed-config/relying_parties.yml
+  RP_DISPLAY_LOCALES: /fed-config/locales/rps
+  RULES_DIRECTORY: /fed-config/idp-rules
+  SEGMENT_DEFINITIONS: /fed-config/segment_definitions.yml
+  SESSION_COOKIE_DURATION_IN_HOURS: "2"
+  VERIFY_PRODUCT_PAGE: https://govuk-verify.cloudapps.digital/
+  WHITE_LOGO_DIRECTORY: /stub-logos/white
+  ZDD_LATCH: .service_unavailable
+  ZENDESK_TOKEN: "123"
+  ZENDESK_URL: https://example.com
+  ZENDESK_USERNAME: fake@zendesk.user
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    io.kompose.service: frontend-configuration-frontend-env
+  name: frontend-configuration-frontend-env
