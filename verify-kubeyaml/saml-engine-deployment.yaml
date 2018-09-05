@@ -150,154 +150,177 @@ spec:
         name: saml-engine
         resources: {}
         volumeMounts:
-        - name: verify-data-vol
-          mountPath: /data
+        - name: verify-data-stub-vol
+          mountPath: /data/stub-fed-config
+        - name: verify-data-ca-vol
+          mountPath: /data/ca-certificates
+        - name: verify-data-locales-vol
+          mountPath: /data/display-locales
+        - name: verify-data-metadata-vol
+          mountPath: /data/metadata
+        - name: verify-data-pki-vol
+          mountPath: /data/pki
       restartPolicy: Always
       volumes:
-      - name: verify-data-vol
+      - name: verify-data-stub-vol
         configMap:
-          name: verify-data
+          name: verify-data-stub
           items:
           - key: stub-fed-config-matching-services-dev-rp-no-eidas-ms.yml
-            path: stub-fed-config/matching-services/dev-rp-no-eidas-ms.yml
+            path: matching-services/dev-rp-no-eidas-ms.yml
           - key: stub-fed-config-matching-services-dev-rp-ms.yml
-            path: stub-fed-config/matching-services/dev-rp-ms.yml
+            path: matching-services/dev-rp-ms.yml
           - key: stub-fed-config-transactions-dev-rp-no-eidas.yml
-            path: stub-fed-config/transactions/dev-rp-no-eidas.yml
+            path: transactions/dev-rp-no-eidas.yml
           - key: stub-fed-config-transactions-dev-rp.yml
-            path: stub-fed-config/transactions/dev-rp.yml
+            path: transactions/dev-rp.yml
           - key: stub-fed-config-idps-stub-idp-one.yml
-            path: stub-fed-config/idps/stub-idp-one.yml
+            path: idps/stub-idp-one.yml
           - key: stub-fed-config-idps-stub-idp-three.yml
-            path: stub-fed-config/idps/stub-idp-three.yml
+            path: idps/stub-idp-three.yml
           - key: stub-fed-config-idps-stub-idp-four.yml
-            path: stub-fed-config/idps/stub-idp-four.yml
+            path: idps/stub-idp-four.yml
           - key: stub-fed-config-idps-stub-idp-two.yml
-            path: stub-fed-config/idps/stub-idp-two.yml
+            path: idps/stub-idp-two.yml
           - key: stub-fed-config-countries-netherlands.yml
-            path: stub-fed-config/countries/netherlands.yml
+            path: countries/netherlands.yml
           - key: stub-fed-config-countries-spain.yml
-            path: stub-fed-config/countries/spain.yml
+            path: countries/spain.yml
           - key: stub-fed-config-countries-sweden.yml
-            path: stub-fed-config/countries/sweden.yml
+            path: countries/sweden.yml
           - key: stub-fed-config-countries-reference.yml
-            path: stub-fed-config/countries/reference.yml
+            path: countries/reference.yml
+      - name: verify-data-ca-vol
+        configMap:
+          name: verify-data-ca
+          items:
           - key: ca-certificates-verify-hub.crt
-            path: ca-certificates/verify-hub.crt
+            path: verify-hub.crt
           - key: ca-certificates-verify-root.crt
-            path: ca-certificates/verify-root.crt
+            path: verify-root.crt
           - key: ca-certificates-verify-metadata.crt
-            path: ca-certificates/verify-metadata.crt
+            path: verify-metadata.crt
           - key: ca-certificates-verify-rp.crt
-            path: ca-certificates/verify-rp.crt
+            path: verify-rp.crt
           - key: ca-certificates-verify-idp.crt
-            path: ca-certificates/verify-idp.crt
+            path: verify-idp.crt
+      - name: verify-data-metadata-vol
+        configMap:
+          name: verify-data-metadata
+          items:
           - key: metadata-dev.xml
-            path: metadata/dev.xml
+            path: dev.xml
           - key: metadata-output-compliance-tool-metadata.signed.xml
-            path: metadata/output/compliance-tool/metadata.signed.xml
-          # - key: metadata-output-compliance-tool-metadata.xml
-          #   path: metadata/output/compliance-tool/metadata.xml
+            path: output/compliance-tool/metadata.signed.xml
+          - key: metadata-output-compliance-tool-metadata.xml
+            path: output/compliance-tool/metadata.xml
           - key: metadata-output-dev-metadata.signed.xml
-            path: metadata/output/dev/metadata.signed.xml
+            path: output/dev/metadata.signed.xml
           - key: metadata-output-dev-metadata.xml
-            path: metadata/output/dev/metadata.xml
+            path: output/dev/metadata.xml
           - key: metadata-compliance-tool-idps-stub-idp-one.yml
-            path: metadata/compliance-tool/idps/stub-idp-one.yml
+            path: compliance-tool/idps/stub-idp-one.yml
           - key: metadata-compliance-tool-idps-stub-idp-three.yml
-            path: metadata/compliance-tool/idps/stub-idp-three.yml
+            path: compliance-tool/idps/stub-idp-three.yml
           - key: metadata-compliance-tool-idps-stub-idp-four.yml
-            path: metadata/compliance-tool/idps/stub-idp-four.yml
+            path: compliance-tool/idps/stub-idp-four.yml
           - key: metadata-compliance-tool-idps-stub-idp-two.yml
-            path: metadata/compliance-tool/idps/stub-idp-two.yml
+            path: compliance-tool/idps/stub-idp-two.yml
           - key: metadata-compliance-tool-hub.yml
-            path: metadata/compliance-tool/hub.yml
+            path: compliance-tool/hub.yml
           - key: metadata-dev-idps-stub-idp-one.yml
-            path: metadata/dev/idps/stub-idp-one.yml
+            path: dev/idps/stub-idp-one.yml
           - key: metadata-dev-idps-stub-idp-three.yml
-            path: metadata/dev/idps/stub-idp-three.yml
+            path: dev/idps/stub-idp-three.yml
           - key: metadata-dev-idps-stub-idp-four.yml
-            path: metadata/dev/idps/stub-idp-four.yml
+            path: dev/idps/stub-idp-four.yml
           - key: metadata-dev-idps-stub-idp-two.yml
-            path: metadata/dev/idps/stub-idp-two.yml
+            path: dev/idps/stub-idp-two.yml
           - key: metadata-dev-hub.yml
-            path: metadata/dev/hub.yml
+            path: dev/hub.yml
           - key: metadata-compliance-tool.xml
-            path: metadata/compliance-tool.xml
+            path: compliance-tool.xml
+      - name: verify-data-locales-vol
+        configMap:
+          name: verify-data-locales
+          items:
           - key: display-locales-transactions-test-rp.yml
-            path: display-locales/transactions/test-rp.yml
+            path: transactions/test-rp.yml
+      - name: verify-data-pki-vol
+        configMap:
+          name: verify-data-pki
+          items:
           - key: pki-sample_rp_encryption_secondary.crt
-            path: pki/sample_rp_encryption_secondary.crt
+            path: sample_rp_encryption_secondary.crt
           - key: pki-metadata_signing_b.crt
-            path: pki/metadata_signing_b.crt
+            path: metadata_signing_b.crt
           - key: pki-hub_signing_primary.pk8
-            path: pki/hub_signing_primary.pk8
+            path: hub_signing_primary.pk8
           - key: pki-sample_rp_encryption_primary.crt
-            path: pki/sample_rp_encryption_primary.crt
+            path: sample_rp_encryption_primary.crt
           - key: pki-metadata_signing_a.crt
-            path: pki/metadata_signing_a.crt
+            path: metadata_signing_a.crt
           - key: pki-sample_rp_signing_secondary.pk8
-            path: pki/sample_rp_signing_secondary.pk8
+            path: sample_rp_signing_secondary.pk8
           - key: pki-metadata_signing_b.pk8
-            path: pki/metadata_signing_b.pk8
+            path: metadata_signing_b.pk8
           - key: pki-idp_federation.ts
-            path: pki/idp_federation.ts
+            path: idp_federation.ts
           - key: pki-sample_rp_encryption_primary.pk8
-            path: pki/sample_rp_encryption_primary.pk8
+            path: sample_rp_encryption_primary.pk8
           - key: pki-hub_signing_primary.crt
-            path: pki/hub_signing_primary.crt
+            path: hub_signing_primary.crt
           - key: pki-sample_rp_encryption_secondary.pk8
-            path: pki/sample_rp_encryption_secondary.pk8
+            path: sample_rp_encryption_secondary.pk8
           - key: pki-metadata_signing_a.pk8
-            path: pki/metadata_signing_a.pk8
+            path: metadata_signing_a.pk8
           - key: pki-sample_rp_signing_secondary.crt
-            path: pki/sample_rp_signing_secondary.crt
+            path: sample_rp_signing_secondary.crt
           - key: pki-hub_encryption_secondary.pk8
-            path: pki/hub_encryption_secondary.pk8
+            path: hub_encryption_secondary.pk8
           - key: pki-hub_encryption_primary.pk8
-            path: pki/hub_encryption_primary.pk8
+            path: hub_encryption_primary.pk8
           - key: pki-hub_encryption_secondary.crt
-            path: pki/hub_encryption_secondary.crt
+            path: hub_encryption_secondary.crt
           - key: pki-hub_encryption_primary.crt
-            path: pki/hub_encryption_primary.crt
+            path: hub_encryption_primary.crt
           - key: pki-hub.ts
-            path: pki/hub.ts
+            path: hub.ts
           - key: pki-sample_rp_msa_signing_primary.pk8
-            path: pki/sample_rp_msa_signing_primary.pk8
+            path: sample_rp_msa_signing_primary.pk8
           - key: pki-sample_rp_signing_primary.pk8
-            path: pki/sample_rp_signing_primary.pk8
+            path: sample_rp_signing_primary.pk8
           - key: pki-sample_rp_msa_signing_primary.crt
-            path: pki/sample_rp_msa_signing_primary.crt
+            path: sample_rp_msa_signing_primary.crt
           - key: pki-sample_rp_signing_primary.crt
-            path: pki/sample_rp_signing_primary.crt
+            path: sample_rp_signing_primary.crt
           - key: pki-stub_idp_signing_secondary.pk8
-            path: pki/stub_idp_signing_secondary.pk8
+            path: stub_idp_signing_secondary.pk8
           - key: pki-sample_rp_msa_encryption_secondary.crt
-            path: pki/sample_rp_msa_encryption_secondary.crt
+            path: sample_rp_msa_encryption_secondary.crt
           - key: pki-relying_parties.ts
-            path: pki/relying_parties.ts
+            path: relying_parties.ts
           - key: pki-metadata.ts
-            path: pki/metadata.ts
+            path: metadata.ts
           - key: pki-hub_signing_secondary.pk8
-            path: pki/hub_signing_secondary.pk8
+            path: hub_signing_secondary.pk8
           - key: pki-sample_rp_msa_encryption_primary.pk8
-            path: pki/sample_rp_msa_encryption_primary.pk8
+            path: sample_rp_msa_encryption_primary.pk8
           - key: pki-sample_rp_msa_signing_secondary.pk8
-            path: pki/sample_rp_msa_signing_secondary.pk8
+            path: sample_rp_msa_signing_secondary.pk8
           - key: pki-stub_idp_signing_primary.crt
-            path: pki/stub_idp_signing_primary.crt
+            path: stub_idp_signing_primary.crt
           - key: pki-sample_rp_msa_encryption_secondary.pk8
-            path: pki/sample_rp_msa_encryption_secondary.pk8
+            path: sample_rp_msa_encryption_secondary.pk8
           - key: pki-stub_idp_signing_secondary.crt
-            path: pki/stub_idp_signing_secondary.crt
+            path: stub_idp_signing_secondary.crt
           - key: pki-sample_rp_msa_signing_secondary.crt
-            path: pki/sample_rp_msa_signing_secondary.crt
+            path: sample_rp_msa_signing_secondary.crt
           - key: pki-sample_rp_msa_encryption_primary.crt
-            path: pki/sample_rp_msa_encryption_primary.crt
+            path: sample_rp_msa_encryption_primary.crt
           - key: pki-hub_signing_secondary.crt
-            path: pki/hub_signing_secondary.crt
+            path: hub_signing_secondary.crt
           - key: pki-hub_federation.ts
-            path: pki/hub_federation.ts
+            path: hub_federation.ts
           - key: pki-stub_idp_signing_primary.pk8
-            path: pki/stub_idp_signing_primary.pk8
-status: {}
+            path: stub_idp_signing_primary.pk8
