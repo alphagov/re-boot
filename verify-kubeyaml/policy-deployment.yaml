@@ -150,8 +150,7 @@ spec:
             configMapKeyRef:
               key: VSP_URL
               name: urls-env
-        image: policy:local
-        imagePullPolicy: Never
+        image: paroxp/verify-policy
         name: policy
         resources: {}
         volumeMounts:

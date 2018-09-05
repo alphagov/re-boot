@@ -9,10 +9,11 @@ metadata:
     io.kompose.service: test-rp
   name: test-rp
 spec:
+  type: NodePort
   ports:
   - name: "80"
+    nodePort: 30130
     port: 80
-    targetPort: 80
   selector:
     io.kompose.service: test-rp
 status:

@@ -10,8 +10,8 @@ data:
   EIDAS_ENABLED: "false"
   EUROPEAN_IDENTITY_ENABLED: "false"
   EVENT_SINK_URL: http://stub-event-sink
-  FRONTEND_EXTERNAL_PORT: "50300"
-  FRONTEND_URL: http://localhost:50300
+  FRONTEND_EXTERNAL_PORT: "30300"
+  FRONTEND_URL: http://192.168.99.100:30300
   HUB_CONNECTOR_ENTITY_ID: http://localhost:55000/local-connector/metadata.xml
   METADATA_ENTITY_ID: https://dev-hub.local
   METADATA_SOURCE_URI: http://not-used
@@ -22,9 +22,9 @@ data:
   SAML_ENGINE_URL: http://saml-engine
   SAML_PROXY_URL: http://saml-proxy
   SAML_SOAP_PROXY_URL: http://saml-soap-proxy
-  STUB_IDP_EXTERNAL_PORT: "50140"
-  STUB_IDP_URL: http://localhost:50140
-  TEST_RP_EXTERNAL_PORT: "50130"
-  TEST_RP_URL: http://localhost:50130
+  STUB_IDP_EXTERNAL_PORT: "30140"
+  STUB_IDP_URL: http://192.168.99.100:30140
+  TEST_RP_EXTERNAL_PORT: "30130"
+  TEST_RP_URL: http://192.168.99.100:30130
   TRUST_ANCHOR_URL: http://not-used
   VSP_URL: http://vsp

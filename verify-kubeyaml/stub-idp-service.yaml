@@ -9,10 +9,11 @@ metadata:
     io.kompose.service: stub-idp
   name: stub-idp
 spec:
+  type: NodePort
   ports:
   - name: "80"
+    nodePort: 30140
     port: 80
-    targetPort: 80
   selector:
     io.kompose.service: stub-idp
 status:

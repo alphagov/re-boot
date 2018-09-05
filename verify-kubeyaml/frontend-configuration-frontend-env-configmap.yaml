@@ -12,7 +12,7 @@ data:
   METRICS_ENABLED: "false"
   PIWIK_SITE_ID: "1"
   POLLING_WAIT_TIME: "2"
-  PUBLIC_PIWIK_HOST: http://localhost:50300/analytics
+  PUBLIC_PIWIK_HOST: http://192.168.99.100:30300/analytics
   RP_CONFIG: /fed-config/relying_parties.yml
   RP_DISPLAY_LOCALES: /fed-config/locales/rps
   RULES_DIRECTORY: /fed-config/idp-rules

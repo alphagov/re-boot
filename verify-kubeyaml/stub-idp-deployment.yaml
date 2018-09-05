@@ -28,56 +28,56 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: CONFIG_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: COUNTRY_EXPECTED_ENTITY_ID
           valueFrom:
             configMapKeyRef:
               key: COUNTRY_EXPECTED_ENTITY_ID
-              name: stub-idp-urls-env
+              name: urls-env
         - name: COUNTRY_METADATA_URI
           valueFrom:
             configMapKeyRef:
               key: COUNTRY_METADATA_URI
-              name: stub-idp-urls-env
+              name: urls-env
         - name: DB_URI
           valueFrom:
             configMapKeyRef:
               key: DB_URI
-              name: stub-idp-urls-env
+              name: urls-env
         - name: EIDAS_ENABLED
           valueFrom:
             configMapKeyRef:
               key: EIDAS_ENABLED
-              name: stub-idp-urls-env
+              name: urls-env
         - name: ENTITY_ID
           value: http://%s.local/SSO/POST
         - name: EUROPEAN_IDENTITY_ENABLED
           valueFrom:
             configMapKeyRef:
               key: EUROPEAN_IDENTITY_ENABLED
-              name: stub-idp-urls-env
+              name: urls-env
         - name: EVENT_SINK_URL
           valueFrom:
             configMapKeyRef:
               key: EVENT_SINK_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: FRONTEND_EXTERNAL_PORT
           valueFrom:
             configMapKeyRef:
               key: FRONTEND_EXTERNAL_PORT
-              name: stub-idp-urls-env
+              name: urls-env
         - name: FRONTEND_URL
           valueFrom:
             configMapKeyRef:
               key: FRONTEND_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: GRAPHITE_REPORTING_FREQUENCY
           value: 24h
         - name: HUB_CONNECTOR_ENTITY_ID
           valueFrom:
             configMapKeyRef:
               key: HUB_CONNECTOR_ENTITY_ID
-              name: stub-idp-urls-env
+              name: urls-env
         - name: KEY_TYPE
           valueFrom:
             configMapKeyRef:
@@ -89,12 +89,12 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: METADATA_ENTITY_ID
-              name: stub-idp-urls-env
+              name: urls-env
         - name: METADATA_SOURCE_URI
           valueFrom:
             configMapKeyRef:
               key: METADATA_SOURCE_URI
-              name: stub-idp-urls-env
+              name: urls-env
         - name: METADATA_TRUSTSTORE
           valueFrom:
             configMapKeyRef:
@@ -104,39 +104,39 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: METADATA_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: MSA_URL
           valueFrom:
             configMapKeyRef:
               key: MSA_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: POLICY_URL
           valueFrom:
             configMapKeyRef:
               key: POLICY_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: PORT
           value: "80"
         - name: RP_SERVICE_URL
           valueFrom:
             configMapKeyRef:
               key: RP_SERVICE_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: SAML_ENGINE_URL
           valueFrom:
             configMapKeyRef:
               key: SAML_ENGINE_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: SAML_PROXY_URL
           valueFrom:
             configMapKeyRef:
               key: SAML_PROXY_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: SAML_SOAP_PROXY_URL
           valueFrom:
             configMapKeyRef:
               key: SAML_SOAP_PROXY_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: STUB_COUNTRY_SIGNING_CERT
           valueFrom:
             configMapKeyRef:
@@ -157,7 +157,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: STUB_IDP_EXTERNAL_PORT
-              name: stub-idp-urls-env
+              name: urls-env
         - name: STUB_IDP_SIGNING_CERT
           valueFrom:
             configMapKeyRef:
@@ -172,19 +172,19 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: STUB_IDP_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: STUB_IDP_YAML_FILE_LOCATION
           value: /idps/stub-idps.yml
         - name: TEST_RP_EXTERNAL_PORT
           valueFrom:
             configMapKeyRef:
               key: TEST_RP_EXTERNAL_PORT
-              name: stub-idp-urls-env
+              name: urls-env
         - name: TEST_RP_URL
           valueFrom:
             configMapKeyRef:
               key: TEST_RP_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: TRUSTSTORE_PASSWORD
           valueFrom:
             configMapKeyRef:
@@ -199,16 +199,166 @@ spec:
           valueFrom:
             configMapKeyRef:
               key: TRUST_ANCHOR_URL
-              name: stub-idp-urls-env
+              name: urls-env
         - name: VSP_URL
           valueFrom:
             configMapKeyRef:
               key: VSP_URL
-              name: stub-idp-urls-env
-        image: stub-idp
+              name: urls-env
+        image: paroxp/verify-stub-idp
         name: stub-idp
         ports:
         - containerPort: 80
         resources: {}
+        volumeMounts:
+        - name: verify-data-vol
+          mountPath: /data
       restartPolicy: Always
+      volumes:
+      - name: verify-data-vol
+        configMap:
+          name: verify-data
+          items:
+          - key: stub-fed-config-matching-services-dev-rp-no-eidas-ms.yml
+            path: stub-fed-config/matching-services/dev-rp-no-eidas-ms.yml
+          - key: stub-fed-config-matching-services-dev-rp-ms.yml
+            path: stub-fed-config/matching-services/dev-rp-ms.yml
+          - key: stub-fed-config-transactions-dev-rp-no-eidas.yml
+            path: stub-fed-config/transactions/dev-rp-no-eidas.yml
+          - key: stub-fed-config-transactions-dev-rp.yml
+            path: stub-fed-config/transactions/dev-rp.yml
+          - key: stub-fed-config-idps-stub-idp-one.yml
+            path: stub-fed-config/idps/stub-idp-one.yml
+          - key: stub-fed-config-idps-stub-idp-three.yml
+            path: stub-fed-config/idps/stub-idp-three.yml
+          - key: stub-fed-config-idps-stub-idp-four.yml
+            path: stub-fed-config/idps/stub-idp-four.yml
+          - key: stub-fed-config-idps-stub-idp-two.yml
+            path: stub-fed-config/idps/stub-idp-two.yml
+          - key: stub-fed-config-countries-netherlands.yml
+            path: stub-fed-config/countries/netherlands.yml
+          - key: stub-fed-config-countries-spain.yml
+            path: stub-fed-config/countries/spain.yml
+          - key: stub-fed-config-countries-sweden.yml
+            path: stub-fed-config/countries/sweden.yml
+          - key: stub-fed-config-countries-reference.yml
+            path: stub-fed-config/countries/reference.yml
+          - key: ca-certificates-verify-hub.crt
+            path: ca-certificates/verify-hub.crt
+          - key: ca-certificates-verify-root.crt
+            path: ca-certificates/verify-root.crt
+          - key: ca-certificates-verify-metadata.crt
+            path: ca-certificates/verify-metadata.crt
+          - key: ca-certificates-verify-rp.crt
+            path: ca-certificates/verify-rp.crt
+          - key: ca-certificates-verify-idp.crt
+            path: ca-certificates/verify-idp.crt
+          - key: metadata-dev.xml
+            path: metadata/dev.xml
+          - key: metadata-output-compliance-tool-metadata.signed.xml
+            path: metadata/output/compliance-tool/metadata.signed.xml
+          # - key: metadata-output-compliance-tool-metadata.xml
+          #   path: metadata/output/compliance-tool/metadata.xml
+          - key: metadata-output-dev-metadata.signed.xml
+            path: metadata/output/dev/metadata.signed.xml
+          - key: metadata-output-dev-metadata.xml
+            path: metadata/output/dev/metadata.xml
+          - key: metadata-compliance-tool-idps-stub-idp-one.yml
+            path: metadata/compliance-tool/idps/stub-idp-one.yml
+          - key: metadata-compliance-tool-idps-stub-idp-three.yml
+            path: metadata/compliance-tool/idps/stub-idp-three.yml
+          - key: metadata-compliance-tool-idps-stub-idp-four.yml
+            path: metadata/compliance-tool/idps/stub-idp-four.yml
+          - key: metadata-compliance-tool-idps-stub-idp-two.yml
+            path: metadata/compliance-tool/idps/stub-idp-two.yml
+          - key: metadata-compliance-tool-hub.yml
+            path: metadata/compliance-tool/hub.yml
+          - key: metadata-dev-idps-stub-idp-one.yml
+            path: metadata/dev/idps/stub-idp-one.yml
+          - key: metadata-dev-idps-stub-idp-three.yml
+            path: metadata/dev/idps/stub-idp-three.yml
+          - key: metadata-dev-idps-stub-idp-four.yml
+            path: metadata/dev/idps/stub-idp-four.yml
+          - key: metadata-dev-idps-stub-idp-two.yml
+            path: metadata/dev/idps/stub-idp-two.yml
+          - key: metadata-dev-hub.yml
+            path: metadata/dev/hub.yml
+          - key: metadata-compliance-tool.xml
+            path: metadata/compliance-tool.xml
+          - key: display-locales-transactions-test-rp.yml
+            path: display-locales/transactions/test-rp.yml
+          - key: pki-sample_rp_encryption_secondary.crt
+            path: pki/sample_rp_encryption_secondary.crt
+          - key: pki-metadata_signing_b.crt
+            path: pki/metadata_signing_b.crt
+          - key: pki-hub_signing_primary.pk8
+            path: pki/hub_signing_primary.pk8
+          - key: pki-sample_rp_encryption_primary.crt
+            path: pki/sample_rp_encryption_primary.crt
+          - key: pki-metadata_signing_a.crt
+            path: pki/metadata_signing_a.crt
+          - key: pki-sample_rp_signing_secondary.pk8
+            path: pki/sample_rp_signing_secondary.pk8
+          - key: pki-metadata_signing_b.pk8
+            path: pki/metadata_signing_b.pk8
+          - key: pki-idp_federation.ts
+            path: pki/idp_federation.ts
+          - key: pki-sample_rp_encryption_primary.pk8
+            path: pki/sample_rp_encryption_primary.pk8
+          - key: pki-hub_signing_primary.crt
+            path: pki/hub_signing_primary.crt
+          - key: pki-sample_rp_encryption_secondary.pk8
+            path: pki/sample_rp_encryption_secondary.pk8
+          - key: pki-metadata_signing_a.pk8
+            path: pki/metadata_signing_a.pk8
+          - key: pki-sample_rp_signing_secondary.crt
+            path: pki/sample_rp_signing_secondary.crt
+          - key: pki-hub_encryption_secondary.pk8
+            path: pki/hub_encryption_secondary.pk8
+          - key: pki-hub_encryption_primary.pk8
+            path: pki/hub_encryption_primary.pk8
+          - key: pki-hub_encryption_secondary.crt
+            path: pki/hub_encryption_secondary.crt
+          - key: pki-hub_encryption_primary.crt
+            path: pki/hub_encryption_primary.crt
+          - key: pki-hub.ts
+            path: pki/hub.ts
+          - key: pki-sample_rp_msa_signing_primary.pk8
+            path: pki/sample_rp_msa_signing_primary.pk8
+          - key: pki-sample_rp_signing_primary.pk8
+            path: pki/sample_rp_signing_primary.pk8
+          - key: pki-sample_rp_msa_signing_primary.crt
+            path: pki/sample_rp_msa_signing_primary.crt
+          - key: pki-sample_rp_signing_primary.crt
+            path: pki/sample_rp_signing_primary.crt
+          - key: pki-stub_idp_signing_secondary.pk8
+            path: pki/stub_idp_signing_secondary.pk8
+          - key: pki-sample_rp_msa_encryption_secondary.crt
+            path: pki/sample_rp_msa_encryption_secondary.crt
+          - key: pki-relying_parties.ts
+            path: pki/relying_parties.ts
+          - key: pki-metadata.ts
+            path: pki/metadata.ts
+          - key: pki-hub_signing_secondary.pk8
+            path: pki/hub_signing_secondary.pk8
+          - key: pki-sample_rp_msa_encryption_primary.pk8
+            path: pki/sample_rp_msa_encryption_primary.pk8
+          - key: pki-sample_rp_msa_signing_secondary.pk8
+            path: pki/sample_rp_msa_signing_secondary.pk8
+          - key: pki-stub_idp_signing_primary.crt
+            path: pki/stub_idp_signing_primary.crt
+          - key: pki-sample_rp_msa_encryption_secondary.pk8
+            path: pki/sample_rp_msa_encryption_secondary.pk8
+          - key: pki-stub_idp_signing_secondary.crt
+            path: pki/stub_idp_signing_secondary.crt
+          - key: pki-sample_rp_msa_signing_secondary.crt
+            path: pki/sample_rp_msa_signing_secondary.crt
+          - key: pki-sample_rp_msa_encryption_primary.crt
+            path: pki/sample_rp_msa_encryption_primary.crt
+          - key: pki-hub_signing_secondary.crt
+            path: pki/hub_signing_secondary.crt
+          - key: pki-hub_federation.ts
+            path: pki/hub_federation.ts
+          - key: pki-stub_idp_signing_primary.pk8
+            path: pki/stub_idp_signing_primary.pk8
 status: {}
