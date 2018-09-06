@@ -1,0 +1,18 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: concourse-worker
+  labels:
+    app: concourse-worker
+    chart: concourse-1.15.0
+    heritage: Tiller
+    release: concourse
+rules:
+- apiGroups:
+  - extensions
+  resources:
+  - podsecuritypolicies
+  resourceNames:
+  - privileged
+  verbs:
+  - use

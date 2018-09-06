@@ -1,0 +1,17 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: concourse-worker
+  labels:
+    app: concourse-worker
+    chart: concourse-1.15.0
+    heritage: Tiller
+    release: concourse
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: concourse-worker
+  namespace: default

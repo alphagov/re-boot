@@ -1,0 +1,162 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: concourse-worker
+  labels:
+    app: concourse-worker
+    chart: "concourse-1.15.0"
+    release: "concourse"
+    heritage: "Tiller"
+
+spec:
+  serviceName: concourse-worker
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: concourse-worker
+        release: "concourse"
+      annotations:
+    spec:
+      serviceAccountName: concourse-worker
+      tolerations:
+        []
+        
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: concourse-worker
+          image: "leeporte/concourse:4.0.0"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/sh
+          args:
+            - -c
+            - |-
+              cp /dev/null /tmp/.liveness_probe
+              rm -rf /concourse-work-dir/*
+              while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                touch /tmp/.pre_start_cleanup
+                sleep 5
+              done
+              rm -f /tmp/.pre_start_cleanup
+              concourse worker --name=${HOSTNAME} | tee -a /tmp/.liveness_probe
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - |-
+                  FATAL_ERRORS=$( echo "${LIVENESS_PROBE_FATAL_ERRORS}" | grep -q '\S' && \
+                      grep -F "${LIVENESS_PROBE_FATAL_ERRORS}" /tmp/.liveness_probe )
+                  cp /dev/null /tmp/.liveness_probe
+                  if [ ! -z "${FATAL_ERRORS}" ]; then
+                    >&2 echo "Fatal error detected: ${FATAL_ERRORS}"
+                    exit 1
+                  fi
+                  if [ -f /tmp/.pre_start_cleanup ]; then
+                    >&2 echo "Still trying to clean up before starting concourse. 'fly prune-worker -w ${HOSTNAME}' might need to be called to force cleanup."
+                    exit 1
+                  fi
+            failureThreshold: 1
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - |-
+                    TARGET="cluster-name-irrelevant"
+                    PIPELINES=$(fly -t $TARGET pipelines | awk '{print $1}')
+
+                    function logged_in() {
+                      fly login \
+                        -c "http://localhost:8080/" \
+                        -k \
+                        -u "concourse" \
+                        -p "concourse" \
+                        -t "$TARGET"
+                    }
+                    while ! logged_in; do
+                      sleep 10
+                    done
+
+                    for PIPELINE in $PIPELINES; do
+                    JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
+                      for [ JOB in $JOBS ]; do
+                        if $JOB != "n/a"; then
+                          echo "Something running"
+                          sleep 5
+                        else
+                          while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                            sleep 5
+                          done
+                        fi
+                      done
+                    done
+
+          env:
+            - name: CONCOURSE_TSA_HOST
+              value: "concourse-web:2222"
+            - name: CONCOURSE_GARDEN_DOCKER_REGISTRY
+              value: 
+            - name: CONCOURSE_GARDEN_INSECURE_DOCKER_REGISTRY
+              value: 
+            - name: CONCOURSE_TSA_PUBLIC_KEY
+              value: "/concourse-keys/host_key.pub"
+            - name: CONCOURSE_TSA_WORKER_PRIVATE_KEY
+              value: "/concourse-keys/worker_key"
+            - name: CONCOURSE_WORK_DIR
+              value: "/concourse-work-dir"
+            - name: CONCOURSE_BAGGAGECLAIM_DRIVER
+              value: "naive"
+            - name: LIVENESS_PROBE_FATAL_ERRORS
+              value: "guardian.api.garden-server.create.failed\nbaggageclaim.api.volume-server.create-volume-async.failed-to-create"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: concourse-keys
+              mountPath: /concourse-keys
+              readOnly: true
+            - name: concourse-work-dir
+              mountPath: /concourse-work-dir
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: concourse-worker
+                  release: "concourse"
+      volumes:
+        - name: concourse-keys
+          secret:
+            secretName: concourse-concourse
+            defaultMode: 0400
+            items:
+              - key: host-key-pub
+                path: host_key.pub
+              - key: worker-key
+                path: worker_key
+              - key: worker-key-pub
+                path: worker_key.pub
+  volumeClaimTemplates:
+    - metadata:
+        name: concourse-work-dir
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "20Gi"
+  updateStrategy:
+    type: RollingUpdate
+  podManagementPolicy: Parallel

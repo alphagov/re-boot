@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: concourse-web
+  labels:
+    app: concourse-web
+    chart: concourse-1.15.0
+    heritage: Tiller
+    release: concourse
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]

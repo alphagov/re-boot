@@ -1,0 +1,237 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: concourse-web
+  labels:
+    app: concourse-web
+    chart: "concourse-1.15.0"
+    release: "concourse"
+    heritage: "Tiller"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: concourse-web
+        release: "concourse"
+      annotations:
+        {}
+        
+    spec:
+      serviceAccountName: concourse-web
+      tolerations:
+        []
+        
+      containers:
+        - name: concourse-web
+          image: "leeporte/concourse:4.0.0"
+          imagePullPolicy: "IfNotPresent"
+          args:
+            - "web"
+            - "--kubernetes-in-cluster"
+            - "--add-local-user"
+            - $(CONCOURSE_BASIC_AUTH_USERNAME):$(CONCOURSE_BASIC_AUTH_PASSWORD)
+            - "--main-team-local-user"
+            - $(CONCOURSE_BASIC_AUTH_USERNAME)
+            - "--external-url"
+            - "http://KUBECTL_CONCOURSE_URL:8080"
+          env:
+            - name: CONCOURSE_TSA_HOST_KEY
+              value: "/concourse-keys/host_key"
+            - name: CONCOURSE_SESSION_SIGNING_KEY
+              value: "/concourse-keys/session_signing_key"
+            - name: CONCOURSE_TSA_AUTHORIZED_KEYS
+              value: "/concourse-keys/worker_key.pub"
+            - name: POSTGRES_HOST
+              value: concourse-postgresql
+            - name: POSTGRES_USER
+              value: concourse
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-postgresql
+                  key: postgres-password
+            - name: POSTGRES_DATABASE
+              value: "concourse"
+            - name: CONCOURSE_POSTGRES_DATA_SOURCE
+              value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST)/$(POSTGRES_DATABASE)?sslmode=disable
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: CONCOURSE_BIND_PORT
+              value: "8080"
+            - name: CONCOURSE_PEER_URL
+              value: "http://$(POD_IP):$(CONCOURSE_BIND_PORT)"
+            - name: CONCOURSE_TSA_BIND_PORT
+              value: "2222"
+            - name: CONCOURSE_ALLOW_SELF_SIGNED_CERTIFICATES
+              value: "false"
+            - name: CONCOURSE_AUTH_DURATION
+              value: "24h"
+            - name: CONCOURSE_RESOURCE_CHECKING_INTERVAL
+              value: "1m"
+            - name: CONCOURSE_OLD_RESOURCE_GRACE_PERIOD
+              value: "5m"
+            - name: CONCOURSE_RESOURCE_CACHE_CLEANUP_INTERVAL
+              value: "30s"
+            - name: CONCOURSE_CONTAINER_PLACEMENT_STRATEGY
+              value: "random"
+            - name: CONCOURSE_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-username
+            - name: CONCOURSE_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-password
+            - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
+              value: concourse-
+            - name: CONCOURSE_VAULT_URL
+              value: "((VAULT_URL))"
+            - name: CONCOURSE_VAULT_CA_CERT
+              value: "((VAULT_CA_CERT))"
+            - name: CONCOURSE_VAULT_CLIENT_TOKEN
+              value: "((VAULT_CLIENT_TOKEN))"
+            - name: CONCOURSE_VAULT_INSECURE_SKIP_VERIFY
+              value: "true"
+
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - -e
+                - |-
+                  fly login \
+                    -c "http://localhost:8080/" \
+                    -k \
+                    -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
+                    -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
+                    -t "cluster-name-irrelevant"
+          ports:
+            - name: atc
+              containerPort: 8080
+            - name: tsa
+              containerPort: 2222
+          livenessProbe:
+            httpGet:
+              path: /
+              port: atc
+            initialDelaySeconds: 120
+            timeoutSeconds: 5
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                - /bin/bash
+                - -c
+                - |-
+                  TARGET="cluster-name-irrelevant"
+                  PIPELINES=$(fly -t $TARGET pipelines | awk '{print $1}')
+
+                  function logged_in() {
+                    fly login \
+                      -c "http://localhost:8080/" \
+                      -k \
+                      -u "concourse" \
+                      -p "concourse" \
+                      -t "$TARGET"
+                  }
+                  while ! logged_in; do
+                    sleep 10
+                  done
+
+                  for PIPELINE in $PIPELINES; do
+                  JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
+                    for [ JOB in $JOBS ]; do
+                      if $JOB != "n/a"; then
+                      echo "Something running"
+                    else
+                      while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
+                        sleep 5
+                      done
+                    fi
+                    done
+                  done
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: atc
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            
+          volumeMounts:
+            - name: concourse-keys
+              mountPath: /concourse-keys
+              readOnly: true
+        - name: concourse-pipeline-updater
+          image: "leeporte/fly-cli:4.0.0"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -c
+            - -e
+            - |-
+              FLY_TARGET="cluster-name-irrelevant"
+              function logged_in() {
+                fly login \
+                  -c "http://localhost:8080/" \
+                  -k \
+                  -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
+                  -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
+                  -t "$FLY_TARGET"
+              }
+              while ! logged_in; do
+                sleep 10
+              done
+              while true; do
+                DA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                DA_CA=$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)
+                DA_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+                fly -t "$FLY_TARGET" set-pipeline -n \
+                  -v KUBE_TOKEN="${DA_TOKEN}" \
+                  -v KUBE_CA="${DA_CA}" \
+                  -v KUBE_NAMESPACE="${DA_NAMESPACE}" \
+                  -p kubernetes-pipeline \
+                  -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" unpause-pipeline -p kubernetes-pipeline
+                sleep 5
+              done
+          env:
+            - name: CONCOURSE_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-username
+            - name: CONCOURSE_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-password
+          volumeMounts:
+            - name: concourse-pipeline
+              mountPath: /pipelines
+      affinity:
+      volumes:
+        - name: concourse-keys
+          secret:
+            secretName: concourse-concourse
+            defaultMode: 0400
+            items:
+              - key: host-key
+                path: host_key
+              - key: session-signing-key
+                path: session_signing_key
+              - key: worker-key-pub
+                path: worker_key.pub
+        - name: concourse-pipeline
+          configMap:
+            name: concourse-pipeline-config

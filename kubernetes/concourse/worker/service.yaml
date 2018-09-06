@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: concourse-worker
+  labels:
+    app: concourse-worker
+    chart: "concourse-1.15.0"
+    release: "concourse"
+    heritage: "Tiller"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ## We do NOT expose any port as workers will forward connections with the ATC through a TSA reverse-tunnel
+  ## ref: https://concourse-ci.org/architecture.html#architecture-worker
+  ##
+  ports: []
+  selector:
+    app: concourse-worker
