@@ -35,20 +35,21 @@ vault login "$(awk '/Initial Root Token/ {print $NF}' "${ROOT_DIR}/assets/vault-
 echo "Creating ServiceAccount"
 kubectl -n vault get serviceaccount vault-tokenreview &> /dev/null || kubectl -n vault create serviceaccount vault-tokenreview
 
-echo "Creating ServiceAccount"
+echo "Applying Cluster Role Binding"
 kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/cluster-role-binding.yaml"
 
 SECRET_NAME=$(kubectl -n vault get serviceaccount vault-tokenreview -o jsonpath='{.secrets[0].name}')
 TR_ACCOUNT_TOKEN=$(kubectl -n vault get secret "${SECRET_NAME}" -o jsonpath='{.data.token}' | base64 --decode)
-export SECRET_NAME TR_ACCOUNT_TOKEN
 
-if [ ! -z "$(vault auth list | grep kubernetesx)" ]; then
-  echo "Enabling kubernetes"
-  vault auth enable kubernetes
-  awk '/certificate-authority-data/ {print $NF}' ~/.kube/kubeconfig | base64 -D > "${ROOT_DIR}/assets/ca.crt"
-  vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert="@${ROOT_DIR}/assets/ca.crt" token_reviewer_jwt="${TR_ACCOUNT_TOKEN}"
-  vault secrets enable -path=/concourse -description="Secrets for concourse pipelines" generic
-fi
+echo "Enabling kubernetes auth in vault"
+
+vault auth disable kubernetes
+vault secrets disable /concourse
+sleep 3
+vault auth enable kubernetes
+awk '/certificate-authority-data/ {print $NF}' ~/.kube/kubeconfig | base64 -D > "${ROOT_DIR}/assets/ca.crt"
+vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert="@${ROOT_DIR}/assets/ca.crt" token_reviewer_jwt="${TR_ACCOUNT_TOKEN}"
+vault secrets enable -path=/concourse -description="Secrets for concourse pipelines" generic
 
 echo "Applying policies"
 vault write sys/policy/concourse-policy policy="@${ROOT_DIR}/kubernetes/vault/vault-policies.hcl"

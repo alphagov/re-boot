@@ -66,8 +66,18 @@ kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/etcd/deployment.yaml"
 kubectl apply -f "${ROOT_DIR}/kubernetes/vault/custom-resource-definition.yaml"
 kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/deployment.yaml"
 kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/vault-service.yaml"
-echo '💤  Leaving some headroom for vault to stabilise - 30s'
-sleep 30
+SEALED_VAULT="$(kubectl -n vault get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}')"
+if [ ! -z "${SEALED_VAULT}"]; then
+  echo '💤  Leaving some headroom for vault to stabilise - 5m - you may need to wait and restart it if following fails'
+  # You might have come here to see WHY ON EARH you need to wait 5 minutes...
+  # Well, we're deploying something called vault-operator. It's basically, yet
+  # another set of bash scripts developed by CoreOS, that setup other resources
+  # Vault requires. It also runs some operations like making it ready to accept
+  # traffic. It may take 30s but it may take 3 minutes. Just to be safe, we're
+  # setting it to 5 minutes to make sure all is ready and you can walk away
+  # without the fear of the procedure failing.
+  sleep 300
+fi
 echo '💤  Setting up Vault'
 sh ${SCRIPT_DIR}/setup-vault.sh
 
