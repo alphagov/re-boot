@@ -1,0 +1,14 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: vault-operator-rolebinding
+  namespace: vault
+subjects:
+- kind: ServiceAccount
+  name: default # Important to leave as `default`. Somehow the operator has this username hardcoded.
+  namespace: vault
+roleRef:
+  kind: Role
+  name: vault-operator-role
+  apiGroup: rbac.authorization.k8s.io
