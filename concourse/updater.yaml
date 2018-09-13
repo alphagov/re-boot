@@ -1,0 +1,48 @@
+
+        - name: concourse-pipeline-updater
+          image: "leeporte/fly-cli:4.0.0"
+          imagePullPolicy: "IfNotPresent"
+          command:
+            - /bin/bash
+            - -c
+            - -e
+            - |-
+              FLY_TARGET="cluster-name-irrelevant"
+              function logged_in() {
+                fly login \
+                  -c "http://localhost:8080/" \
+                  -k \
+                  -u "$CONCOURSE_BASIC_AUTH_USERNAME" \
+                  -p "$CONCOURSE_BASIC_AUTH_PASSWORD" \
+                  -t "$FLY_TARGET"
+              }
+              while ! logged_in; do
+                sleep 10
+              done
+              while true; do
+                DA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                DA_CA=$(cat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt)
+                DA_NAMESPACE=$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)
+                fly -t "$FLY_TARGET" set-pipeline -n \
+                  -v KUBE_TOKEN="${DA_TOKEN}" \
+                  -v KUBE_CA="${DA_CA}" \
+                  -v KUBE_NAMESPACE="${DA_NAMESPACE}" \
+                  -p kubernetes-pipeline \
+                  -c /pipelines/pipeline.yaml
+                fly -t "$FLY_TARGET" unpause-pipeline -p kubernetes-pipeline
+                sleep 5
+              done
+          env:
+            - name: CONCOURSE_BASIC_AUTH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-username
+            - name: CONCOURSE_BASIC_AUTH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: concourse-concourse
+                  key: basic-auth-password
+          volumeMounts:
+            - name: concourse-pipeline
+              mountPath: /pipelines
