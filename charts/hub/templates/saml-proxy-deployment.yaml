@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: saml-proxy
+  labels:
+    io.kompose.service: saml-proxy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: saml-proxy
+    spec:
+      containers:
+      - name: saml-proxy
+        image: govukverify/saml-proxy
+        volumeMounts:
+        - name: config-vol
+          mountPath: /saml-proxy/saml-proxy.yml
+          subPath: saml-proxy.yml
+        - name: pki-vol
+          mountPath: /ida/truststore
+      restartPolicy: Always
+      volumes:
+      - name: config-vol
+        configMap:
+          name: saml-proxy-config
+          items:
+          - key: saml-proxy.yml
+            path: saml-proxy.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: metadata.ts
+            path: ida_metadata_truststore.ts
+          - key: relying_parties.ts
+            path: ida_rp_truststore.ts
+          - key: hub_federation.ts
+            path: ida_hub_truststore.ts
+          - key: idp_federation.ts
+            path: ida_idp_truststore.ts

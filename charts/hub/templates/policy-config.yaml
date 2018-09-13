@@ -1,0 +1,153 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: policy-config
+data:
+  policy.yml: |
+    configUri: {{ required "config.uri is required" .Values.config.uri }}
+    eventSinkUri: {{ required "eventSink.uri is required" .Values.eventSink.uri }}
+    samlEngineUri: {{ required "samlEngine.uri is required" .Values.samlEngine.uri }}
+    samlSoapProxyUri: {{ required "samlSoapProxy.uri is required" .Values.samlSoapProxy.uri }}
+
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+        # - type: https
+        #   port: 50113
+        #   keyStorePath: /ida/policy/policy.ks
+        #   keyStorePassword: {{ required "policy.server.keyStorePassword is required" .Values.policy.server.keyStorePassword }}
+        #   validatePeers: false
+        #   validateCerts: false
+        #   # TLSv1.1 included as curl seems to get unset with 1.2 for some
+        #   # as-yet-uninvestigated reason.
+        #   supportedProtocols:
+        #     - "TLSv1.1"
+        #     - "TLSv1.2"
+        #   excludedCipherSuites: []
+        #   supportedCipherSuites:
+        #     - TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 # for TLS 1.2
+        #     - TLS_DHE_RSA_WITH_AES_128_CBC_SHA    # for TLS 1.1
+
+      adminConnectors:
+        - type: http
+          port: 50111
+
+      requestLog:
+        type: classic
+        appenders:
+          - type: console
+          # - type: file
+          #   currentLogFilename: /var/log/ida/debug/policy_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/debug/policy_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-file
+          #   currentLogFilename: /var/log/ida/policy_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/policy_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-syslog
+          #   facility: local2
+          #   tag: policy
+
+    timeoutPeriod: 90m
+    assertionLifetime: 60m
+    acceptSelfSignedCerts: true
+    matchingServiceResponseWaitPeriod: 60s
+
+    metrics:
+      reporters:
+        - type: graphite
+          host: graphite
+          port: 2003
+          prefix: {{ .Values.policy.metricsPrefix | default "" | quote }}
+          frequency: 24h
+
+    infinispan:
+      bindAddress: {{ .Values.policy.infinispan.bindAddress | quote }}
+      initialHosts: {{ .Values.policy.infinispan.initialHosts | quote }}
+      clusterName: 'policy-cluster'
+      port: 7801
+      type: {{ required "policy.infinispan.type is required" .Values.policy.infinispan.type | quote }}
+      expiration: 150m
+      encryptConfiguration:
+        keyStoreName: /ida/policy/keys/infinispan_policy.ks
+        keyStorePassword: {{ required "policy.infinispan.encryptConfiguration.keyStorePassword is required" .Values.policy.infinispan.encryptConfiguration.keyStorePassword }}
+        encryptionKeyAlias: 'infinispan_policy'
+      authConfiguration:
+        authValue: {{ required "policy.infinispan.authConfiguration.authValue is required" .Values.policy.infinispan.authConfiguration.authValue }}
+        keyStorePath: /ida/policy/keys/infinispan_policy.ks
+        keyStorePassword: {{ required "policy.infinispan.authConfiguration.keyStorePassword is required" .Values.policy.infinispan.authConfiguration.keyStorePassword }}
+        keyStoreType: 'jceks'
+        certAlias: 'infinispan_policy_auth_key'
+        cipherType: 'RSA'
+      persistenceToFileEnabled: false
+
+    enableRetryTimeOutConnections: true
+
+    httpClient:
+      timeout: 60s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 4s
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+      # tls:
+      #   protocol: TLSv1.2
+      #   trustStorePath: /ida/policy/policy.ks
+      #   trustStorePassword: {{ required "policy.httpClient.tls.trustStorePassword is required" .Values.policy.httpClient.tls.trustStorePassword }}
+      #   verifyHostname: false
+
+    samlSoapProxyClient:
+      timeout: 60s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 4s
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+      # tls:
+      #   protocol: TLSv1.2
+      #   trustStorePath: /ida/truststore/saml_soap_proxy_tls_truststore.ts
+      #   trustStorePassword: {{ required "policy.samlSoapProxyClient.tls.trustStorePassword is required" .Values.policy.samlSoapProxyClient.tls.trustStorePassword }}
+      #   verifyHostname: {{ required "policy.samlSoapProxyClient.tls.verifyHostname is required" .Values.policy.samlSoapProxyClient.tls.verifyHostname }}
+
+    serviceInfo:
+      name: policy
+
+    clientTrustStoreConfiguration:
+      path: /ida/truststore/ida_truststore.ts
+      password: {{ required "clientTrustStoreConfiguration.password is required" .Values.clientTrustStoreConfiguration.password }} 
+
+    logging:
+      level: {{ required "policy.logging.level is required" .Values.policy.logging.level }}
+      appenders:
+        # - type: file
+        #   currentLogFilename: /var/log/ida/debug/policy.log
+        #   archivedLogFilenamePattern: /var/log/ida/debug/policy.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-file
+        #   currentLogFilename: /var/log/ida/policy.log
+        #   archivedLogFilenamePattern: /var/log/ida/policy.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-syslog
+        #   facility: local2
+        #   tag: policy
+        # - type: raven
+        #   dsn: {{ required "policy.logging.raven.sentryDSN is required" .Values.policy.logging.raven.sentryDSN }}
+        #   threshold: ERROR
+        #   tags: service-name:policy
+        - type: console
+
+    eidas: {{ .Values.policy.eidas }}
+
+    eventEmitterConfiguration:
+      enabled: {{ required "policy.eventEmitterConfiguration.enabled is required" .Values.policy.eventEmitterConfiguration.enabled }}
+      {{ if .Values.policy.eventEmitterConfiguration.enabled }}
+      accessKeyId: {{ required "policy.eventEmitterConfiguration.accessKeyId is required" .Values.policy.eventEmitterConfiguration.accessKeyId }}
+      secretAccessKey: {{ required "policy.eventEmitterConfiguration.secretAccessKey is required" .Values.policy.eventEmitterConfiguration.secretAccessKey }}
+      region: {{ required "policy.eventEmitterConfiguration.region is required" .Values.policy.eventEmitterConfiguration.region }}
+      encryptionKey: {{ required "policy.eventEmitterConfiguration.encryptionKey is required" .Values.policy.eventEmitterConfiguration.encryptionKey }}
+      apiGatewayUrl: {{ required "policy.eventEmitterConfiguration.apiGatewayUrl" .Values.policy.eventEmitterConfiguration.apiGatewayUrl }}
+      {{ end }}

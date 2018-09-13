@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: msa
+  labels:
+    io.kompose.service: msa
+spec:
+  ports:
+  - port: 80
+  selector:
+    io.kompose.service: msa

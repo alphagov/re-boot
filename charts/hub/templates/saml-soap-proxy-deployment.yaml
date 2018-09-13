@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: saml-soap-proxy
+  labels:
+    io.kompose.service: saml-soap-proxy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: saml-soap-proxy
+    spec:
+      containers:
+      - name: saml-soap-proxy
+        image: saml-soap-proxy:local
+        volumeMounts:
+        - name: config-vol
+          mountPath: /saml-soap-proxy/saml-soap-proxy.yml
+          subPath: saml-soap-proxy.yml
+        - name: pki-vol
+          mountPath: /pki
+      restartPolicy: Always
+      volumes:
+      - name: config-vol
+        configMap:
+          name: saml-soap-proxy-config
+          items:
+          - key: saml-soap-proxy.yml
+            path: saml-soap-proxy.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: relying_parties.ts
+            path: relying_parties.ts
+          - key: metadata.ts
+            path: metadata.ts
+          - key: hub_federation.ts
+            path: hub_federation.ts
+          - key: idp_federation.ts
+            path: idp_federation.ts

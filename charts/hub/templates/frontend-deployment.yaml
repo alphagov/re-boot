@@ -1,0 +1,177 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    io.kompose.service: frontend
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: govukverify/frontend
+        ports:
+        - containerPort: 80
+        env:
+        - name: SESSION_COOKIE_DURATION_IN_HOURS
+          value: "2"
+        - name: RP_DISPLAY_LOCALES
+          value: "/fed-config/locales/rps"
+        - name: CYCLE_3_DISPLAY_LOCALES
+          value: "/fed-config/locales/cycle3"
+        - name: IDP_DISPLAY_LOCALES
+          value: "/fed-config/locales/idps"
+        - name: COUNTRY_DISPLAY_LOCALES
+          value: "/fed-config/locales/countries"
+        - name: LOGO_DIRECTORY
+          value: "/stub-logos"
+        - name: WHITE_LOGO_DIRECTORY
+          value: "/stub-logos/white"
+        - name: ZDD_LATCH
+          value: ".service_unavailable"
+        - name: POLLING_WAIT_TIME
+          value: "2"
+        - name: METRICS_ENABLED
+          value: "false"
+        - name: LOG_LEVEL
+          value: "debug"
+        - name: RULES_DIRECTORY
+          value: "/fed-config/idp-rules"
+        - name: RP_CONFIG
+          value: "/fed-config/relying_parties.yml"
+        - name: IDP_CONFIG
+          value: "/fed-config/identity_providers.yml"
+        - name: CYCLE_THREE_ATTRIBUTES_DIRECTORY
+          value: "/fed-config/attributes"
+        - name: AB_TEST_FILE
+          value: "/fed-config/ab_test.yml"
+        - name: SEGMENT_DEFINITIONS
+          value: "/fed-config/segment_definitions.yml"
+        - name: PUBLIC_PIWIK_HOST
+          value: "http://localhost:30300/analytics"
+        - name: INTERNAL_PIWIK_HOST
+          value: "https://localhost:1235/piwik.php"
+        - name: PIWIK_SITE_ID
+          value: "1"
+        - name: ZENDESK_URL
+          value: "https://example.com"
+        - name: ZENDESK_USERNAME
+          value: "fake@zendesk.user"
+        - name: ZENDESK_TOKEN
+          value: "123"
+        - name: VERIFY_PRODUCT_PAGE
+          value: "https://govuk-verify.cloudapps.digital/"
+        - name: CONFIG_API_HOST
+          value: http://config
+        - name: POLICY_HOST
+          value: http://policy
+        - name: SAML_PROXY_HOST
+          value: http://saml-proxy
+        volumeMounts:
+        - name: frontend-vol
+          mountPath: /fed-config
+      restartPolicy: Always
+      volumes:
+      - name: frontend-vol
+        configMap:
+          name: frontend-config
+          items:
+          - key: idp-rules-stub-idp-one.yml
+            path: idp-rules/stub-idp-one.yml
+          - key: idp-rules-stub-idp-no-docs.yml
+            path: idp-rules/stub-idp-no-docs.yml
+          - key: idp-rules-stub-idp-three.yml
+            path: idp-rules/stub-idp-three.yml
+          - key: idp-rules-stub-idp-loa1-with-interstital.yml
+            path: idp-rules/stub-idp-loa1-with-interstital.yml
+          - key: idp-rules-verify-eidas-bridge.yml
+            path: idp-rules/verify-eidas-bridge.yml
+          - key: idp-rules-stub-idp-loa1.yml
+            path: idp-rules/stub-idp-loa1.yml
+          - key: idp-rules-stub-idp-four.yml
+            path: idp-rules/stub-idp-four.yml
+          - key: idp-rules-stub-idp-two.yml
+            path: idp-rules/stub-idp-two.yml
+          - key: idp-rules-stub-idp-demo.yml
+            path: idp-rules/stub-idp-demo.yml
+          - key: idp-rules-stub-idp-unavailable.yml
+            path: idp-rules/stub-idp-unavailable.yml
+          - key: idp-rules-stub-idp-one-doc-question.yml
+            path: idp-rules/stub-idp-one-doc-question.yml
+          - key: locales-rps-test-rp-repudiation.yml
+            path: locales/rps/test-rp-repudiation.yml
+          - key: locales-rps-test-rp-with-continue-on-fail.yml
+            path: locales/rps/test-rp-with-continue-on-fail.yml
+          - key: locales-rps-test-rp.yml
+            path: locales/rps/test-rp.yml
+          - key: locales-rps-test-rp-no-demo.yml
+            path: locales/rps/test-rp-no-demo.yml
+          - key: locales-rps-test-rp-non-eidas.yml
+            path: locales/rps/test-rp-non-eidas.yml
+          - key: locales-rps-test-rp-no-ab-test.yml
+            path: locales/rps/test-rp-no-ab-test.yml
+          - key: locales-rps-loa1-test-rp.yml
+            path: locales/rps/loa1-test-rp.yml
+          - key: locales-rps-headless-rp.yml
+            path: locales/rps/headless-rp.yml
+          - key: locales-rps-test-rp-noc3.yml
+            path: locales/rps/test-rp-noc3.yml
+          - key: locales-cycle3-NullableAttribute.yml
+            path: locales/cycle3/NullableAttribute.yml
+          - key: locales-cycle3-NationalInsuranceNumber.yml
+            path: locales/cycle3/NationalInsuranceNumber.yml
+          - key: locales-cycle3-DrivingLicenceNumber.yml
+            path: locales/cycle3/DrivingLicenceNumber.yml
+          - key: locales-idps-stub-idp-one.yml
+            path: locales/idps/stub-idp-one.yml
+          - key: locales-idps-stub-idp-no-docs.yml
+            path: locales/idps/stub-idp-no-docs.yml
+          - key: locales-idps-stub-idp-three.yml
+            path: locales/idps/stub-idp-three.yml
+          - key: locales-idps-verify-eidas-bridge.yml
+            path: locales/idps/verify-eidas-bridge.yml
+          - key: locales-idps-stub-idp-loa1.yml
+            path: locales/idps/stub-idp-loa1.yml
+          - key: locales-idps-stub-idp-loa1-with-interstitial.yml
+            path: locales/idps/stub-idp-loa1-with-interstitial.yml
+          - key: locales-idps-stub-idp-zero.yml
+            path: locales/idps/stub-idp-zero.yml
+          - key: locales-idps-stub-idp-four.yml
+            path: locales/idps/stub-idp-four.yml
+          - key: locales-idps-stub-idp-two.yml
+            path: locales/idps/stub-idp-two.yml
+          - key: locales-idps-stub-idp-demo.yml
+            path: locales/idps/stub-idp-demo.yml
+          - key: locales-idps-stub-idp-unavailable.yml
+            path: locales/idps/stub-idp-unavailable.yml
+          - key: locales-idps-stub-idp-one-doc-question.yml
+            path: locales/idps/stub-idp-one-doc-question.yml
+          - key: locales-countries-yy.yml
+            path: locales/countries/yy.yml
+          - key: locales-countries-es.yml
+            path: locales/countries/es.yml
+          - key: locales-countries-se.yml
+            path: locales/countries/se.yml
+          - key: locales-countries-zz.yml
+            path: locales/countries/zz.yml
+          - key: locales-countries-nl.yml
+            path: locales/countries/nl.yml
+          - key: attributes-NullableAttribute.yml
+            path: attributes/NullableAttribute.yml
+          - key: attributes-NationalInsuranceNumber.yml
+            path: attributes/NationalInsuranceNumber.yml
+          - key: attributes-DrivingLicenceNumber.yml
+            path: attributes/DrivingLicenceNumber.yml
+          - key: segment_definitions.yml
+            path: segment_definitions.yml
+          - key: relying_parties.yml
+            path: relying_parties.yml
+          - key: identity_providers.yml
+            path: identity_providers.yml
+          - key: ab_test.yml
+            path: ab_test.yml
+

@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: stub-idp-db
+  labels:
+    io.kompose.service: stub-idp-db
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: stub-idp-db
+    spec:
+      containers:
+      - name: stub-idp-db
+        image: postgres
+      restartPolicy: Always

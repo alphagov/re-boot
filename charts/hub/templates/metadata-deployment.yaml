@@ -1,0 +1,59 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: metadata
+  name: metadata
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: metadata
+    spec:
+      containers:
+      - image: nginx
+        name: metadata
+        resources: {}
+        volumeMounts:
+        - name: metadata-vol
+          mountPath: /usr/share/nginx/html
+      restartPolicy: Always
+      volumes:
+      - name: metadata-vol
+        configMap:
+          name: metadata-config
+          items:
+          - key: dev.xml
+            path: dev.xml
+          - key: output-compliance-tool-metadata.signed.xml
+            path: output/compliance-tool/metadata.signed.xml
+          - key: output-compliance-tool-metadata.xml
+            path: output/compliance-tool/metadata.xml
+          - key: output-dev-metadata.signed.xml
+            path: output/dev/metadata.signed.xml
+          - key: output-dev-metadata.xml
+            path: output/dev/metadata.xml
+          - key: compliance-tool-idps-stub-idp-one.yml
+            path: compliance-tool/idps/stub-idp-one.yml
+          - key: compliance-tool-idps-stub-idp-three.yml
+            path: compliance-tool/idps/stub-idp-three.yml
+          - key: compliance-tool-idps-stub-idp-four.yml
+            path: compliance-tool/idps/stub-idp-four.yml
+          - key: compliance-tool-idps-stub-idp-two.yml
+            path: compliance-tool/idps/stub-idp-two.yml
+          - key: compliance-tool-hub.yml
+            path: compliance-tool/hub.yml
+          - key: dev-idps-stub-idp-one.yml
+            path: dev/idps/stub-idp-one.yml
+          - key: dev-idps-stub-idp-three.yml
+            path: dev/idps/stub-idp-three.yml
+          - key: dev-idps-stub-idp-four.yml
+            path: dev/idps/stub-idp-four.yml
+          - key: dev-idps-stub-idp-two.yml
+            path: dev/idps/stub-idp-two.yml
+          - key: dev-hub.yml
+            path: dev/hub.yml
+          - key: compliance-tool.xml
+            path: compliance-tool.xml
+

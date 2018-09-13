@@ -1,0 +1,185 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saml-proxy-config
+data:
+  saml-proxy.yml: |
+    policyUri: {{ required "policy.uri is required" .Values.policy.uri }}
+    configUri: {{ required "config.uri is required" .Values.config.uri }}
+    eventSinkUri: {{ required "eventSink.uri is required" .Values.eventSink.uri }}
+    samlEngineUri: {{ required "samlEngine.uri is required" .Values.samlEngine.uri }}
+    samlSoapProxyUri: {{ required "samlSoapProxy.uri is required" .Values.samlSoapProxy.uri }}
+
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+        # - type: https
+        #   port: 50223
+        #   keyStorePath: /ida/saml-proxy/saml-proxy.ks
+        #   keyStorePassword: marshmallow
+        #   validatePeers: false
+        #   validateCerts: false
+        #   # TLSv1.1 included as curl seems to get unset with 1.2 for some
+        #   # as-yet-uninvestigated reason.
+        #   supportedProtocols:
+        #     - "TLSv1.1"
+        #     - "TLSv1.2"
+        #   excludedCipherSuites: []
+        #   supportedCipherSuites:
+        #     - TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 # for TLS 1.2
+        #     - TLS_DHE_RSA_WITH_AES_128_CBC_SHA    # for TLS 1.1
+      adminConnectors:
+        - type: http
+          port: 50221
+
+      requestLog:
+        type: classic
+        appenders:
+          - type: console
+          # - type: file
+          #   currentLogFilename: /var/log/ida/debug/saml-proxy_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/debug/saml-proxy_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-file
+          #   currentLogFilename: /var/log/ida/saml-proxy_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/saml-proxy_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-syslog
+          #   facility: local2
+          #   tag: saml-proxy
+
+    saml:
+      entityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+      expectedDestination: {{ required "samlEngine.expectedDestination is required" .Values.samlEngine.expectedDestination }}
+
+    enableRetryTimeOutConnections: true
+
+    httpClient:
+      timeout: 60s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 4s
+      retries: 3
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+      # tls:
+      #   protocol: TLSv1.2
+      #   verifyHostname: false
+      #   trustStorePath: /ida/saml-proxy/saml-proxy.ks
+      #   trustStorePassword: marshmallow
+
+    # frontendExternalUri: {{ required "samlEngine.expectedDestination is required" .Values.samlEngine.expectedDestination }}
+    frontendExternalUri: http://localhost:50300
+
+    metrics:
+      reporters:
+        - type: graphite
+          host: graphite
+          port: 2003
+          prefix: {{ .Values.samlSoapProxy.metricsPrefix | default "" | quote }}
+          frequency: 24h
+
+    serviceInfo:
+      name: saml-proxy
+
+    rpTrustStoreConfiguration:
+      path: /ida/truststore/ida_rp_truststore.ts
+      password: marshmallow
+
+    metadataValidDuration: 1h
+
+    featureFlagConfiguration: {}
+
+    logging:
+      level: INFO
+      appenders:
+        # - type: file
+        #   currentLogFilename: /var/log/ida/debug/saml-proxy.log
+        #   archivedLogFilenamePattern: /var/log/ida/debug/saml-proxy.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-file
+        #   currentLogFilename: /var/log/ida/saml-proxy.log
+        #   archivedLogFilenamePattern: /var/log/ida/saml-proxy.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-syslog
+        #   facility: local2
+        #   tag: saml-proxy
+        # - type: raven
+        #   dsn: naive+https://sentry/1
+        #   threshold: ERROR
+        #   tags: service-name:saml-proxy
+        - type: console
+
+    metadata:
+      uri: {{ required "metadata.uri is required" .Values.metadata.uri }}
+      trustStorePath: /ida/truststore/ida_metadata_truststore.ts
+      trustStorePassword: marshmallow
+      trustStore:
+        path: /ida/truststore/ida_metadata_truststore.ts
+        password: marshmallow
+      hubTrustStore:
+        path: /ida/truststore/ida_hub_truststore.ts
+        password: marshmallow
+      idpTrustStore:
+        path: /ida/truststore/ida_idp_truststore.ts
+        password: marshmallow
+      minRefreshDelay: 30000
+      maxRefreshDelay: 1800000
+      expectedEntityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+      jerseyClientName: verify-metadata-client
+      client:
+        timeout: 60s
+        timeToLive: 10m
+        cookiesEnabled: false
+        connectionTimeout: 4s
+        retries: 3
+        keepAlive: 60s
+        chunkedEncodingEnabled: false
+        validateAfterInactivityPeriod: 5s
+        # tls:
+        #   protocol: TLSv1.2
+        #   trustStorePath: /ida/truststore/ida_metadata_tls_truststore.ts
+        #   trustStorePassword: marshmallow
+
+    country:
+      enabled: {{ .Values.eidas.enabled }}
+      saml:
+        entityId: {{ .Values.samlEngine.signinDomain }}/SAML2/metadata/connector
+        expectedDestination: {{ .Values.samlEngine.signinDomain }}/SAML2/SSO/EidasResponse/POST
+      metadata:
+        trustAnchorUri: {{ .Values.eidas.trustAnchorUri }}
+        metadataSourceUri: {{ .Values.metadataSourceUri }}
+        trustStore:
+          store: /ida/truststore/ida_metadata_truststore.ts
+          trustStorePassword: marshmallow
+        minRefreshDelay: 5000
+        maxRefreshDelay: 1800000
+        jerseyClientName: country-metadata-client
+        client:
+          timeout: 60s
+          timeToLive: 10m
+          cookiesEnabled: false
+          connectionTimeout: 4s
+          retries: 3
+          keepAlive: 60s
+          chunkedEncodingEnabled: false
+          validateAfterInactivityPeriod: 5s
+          # tls:
+          #   protocol: TLSv1.2
+          #   verifyHostname: false
+          #   trustSelfSignedCertificates: true
+
+    eidas: false
+
+    eventEmitterConfiguration:
+      enabled: {{ required "policy.eventEmitterConfiguration.enabled is required" .Values.policy.eventEmitterConfiguration.enabled }}
+      {{ if .Values.policy.eventEmitterConfiguration.enabled }}
+      accessKeyId: {{ required "policy.eventEmitterConfiguration.accessKeyId is required" .Values.policy.eventEmitterConfiguration.accessKeyId }}
+      secretAccessKey: {{ required "policy.eventEmitterConfiguration.secretAccessKey is required" .Values.policy.eventEmitterConfiguration.secretAccessKey }}
+      region: {{ required "policy.eventEmitterConfiguration.region is required" .Values.policy.eventEmitterConfiguration.region }}
+      encryptionKey: {{ required "policy.eventEmitterConfiguration.encryptionKey is required" .Values.policy.eventEmitterConfiguration.encryptionKey }}
+      apiGatewayUrl: {{ required "policy.eventEmitterConfiguration.apiGatewayUrl" .Values.policy.eventEmitterConfiguration.apiGatewayUrl }}
+      {{ end }}

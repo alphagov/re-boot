@@ -1,0 +1,5 @@
+Please do not use with Tiller... jsut use `helm template` to generate the kubeyaml
+
+{{- if .Values.eidas }}
+You have enabled eidas, but this has not been implemented yet in this deployment
+{{- end }}

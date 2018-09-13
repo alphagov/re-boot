@@ -1,0 +1,209 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saml-engine-config
+data:
+  saml-engine.yml: |
+    configUri: {{ required "config.uri is required" .Values.config.uri }}
+    eventSinkUri: {{ required "eventSink.uri is required" .Values.eventSink.uri }}
+    samlEngineUri: {{ required "samlEngine.uri is required" .Values.samlEngine.uri }}
+    samlSoapProxyUri: {{ required "samlSoapProxy.uri is required" .Values.samlSoapProxy.uri }}
+
+    readKeysFromFileDescriptors: false
+
+    publicSigningCert:
+      name: hub_signing_cert
+      certFile: /ida/truststore/hub_signing.crt
+
+    privateSigningKeyConfiguration:
+      keyFile: /ida/truststore/hub_signing_primary.pk8
+
+    primaryPrivateEncryptionKeyConfiguration:
+      keyFile: /ida/truststore/hub_encryption_primary.pk8
+
+    secondaryPrivateEncryptionKeyConfiguration:
+      keyFile: /ida/truststore/hub_encryption_secondary.pk8
+
+    rpTrustStoreConfiguration:
+      path: /ida/truststore/ida_rp_truststore.ts
+      password: marshmallow
+
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+        # - type: https
+        #   port: 50123
+        #   keyStorePath: /ida/saml-engine/saml-engine.ks
+        #   keyStorePassword: marshmallow
+        #   validatePeers: false
+        #   validateCerts: false
+        #   # TLSv1.1 included as curl seems to get unset with 1.2 for some
+        #   # as-yet-uninvestigated reason.
+        #   supportedProtocols:
+        #     - "TLSv1.1"
+        #     - "TLSv1.2"
+        #   excludedCipherSuites: []
+        #   supportedCipherSuites:
+        #     - TLS_DHE_RSA_WITH_AES_128_GCM_SHA256 # for TLS 1.2
+        #     - TLS_DHE_RSA_WITH_AES_128_CBC_SHA    # for TLS 1.1
+
+      adminConnectors:
+        - type: http
+          port: 50121
+
+      requestLog:
+        type: classic
+        appenders:
+          - type: console
+          # - type: file
+          #   currentLogFilename: /var/log/ida/debug/saml-engine_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/debug/saml-engine_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-file
+          #   currentLogFilename: /var/log/ida/saml-engine_access.log
+          #   archivedLogFilenamePattern: /var/log/ida/saml-engine_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-syslog
+          #   facility: local2
+          #   tag: saml-engine
+
+    saml:
+      entityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+      expectedDestination: {{ required "samlEngine.expectedDestination is required" .Values.samlEngine.expectedDestination }}
+
+    enableRetryTimeOutConnections: true
+
+    httpClient:
+      timeout: 60s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 4s
+      keepAlive: 60s
+      gzipEnabled: false
+      gzipEnabledForRequests: false
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+      # tls:
+      #   protocol: TLSv1.2
+      #   verifyHostname: false
+      #   trustStorePath: /ida/saml-engine/saml-engine.ks
+      #   trustStorePassword: marshmallow
+
+    infinispan:
+      bindAddress: {{ .Values.samlEngine.infinispan.bindAddress | quote }}
+      initialHosts: {{ .Values.samlEngine.infinispan.initialHosts | quote }}
+      clusterName: 'saml-engine-cluster'
+      type: {{ .Values.samlEngine.infinispan.type }}
+      expiration: '2h'
+      encryptConfiguration:
+        keyStoreName: /ida/saml-engine/keys/infinispan_saml_engine.ks
+        keyStorePassword: marshmallow
+        encryptionKeyAlias: 'infinispan_saml_engine'
+      authConfiguration:
+        authValue: marshmallow
+        keyStorePath: /ida/saml-engine/keys/infinispan_saml_engine.ks
+        keyStorePassword: marshmallow
+        keyStoreType: 'jceks'
+        certAlias: 'infinispan_saml_engine_auth_key'
+        cipherType: 'RSA'
+      persistenceToFileEnabled: false
+
+    metrics:
+      reporters:
+        - type: graphite
+          host: graphite
+          port: 2003
+          prefix: {{ .Values.samlEngine.metricsPrefix | default "" | quote }}
+          frequency: 24h
+
+    serviceInfo:
+      name: saml-engine
+
+    featureFlagConfiguration: {}
+
+    logging:
+      level: INFO
+      appenders:
+        # - type: file
+        #   currentLogFilename: /var/log/ida/debug/saml-engine.log
+        #   archivedLogFilenamePattern: /var/log/ida/debug/saml-engine.log.%d.gz
+        #   archivedFileCount: 7
+        #   logFormat: '%-5p [%d{ISO8601,UTC}] %c: %X{logPrefix}%m%n%xEx'
+        # - type: logstash-file
+        #   currentLogFilename: /var/log/ida/saml-engine.log
+        #   archivedLogFilenamePattern: /var/log/ida/saml-engine.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-syslog
+        #   facility: local2
+        #   tag: saml-engine
+        # - type: raven
+        #   dsn: naive+https://sentry/1
+        #   threshold: ERROR
+        #   tags: service-name:saml-engine
+        - type: console
+
+    authnRequestIdExpirationDuration: 90m
+
+    authnRequestValidityDuration: 5m
+
+    metadata:
+      uri: {{ required "metadata.uri is required" .Values.metadata.uri }}
+      trustStorePath: /ida/truststore/ida_metadata_truststore.ts
+      trustStorePassword: marshmallow
+      trustStore:
+        path: /ida/truststore/ida_metadata_truststore.ts
+        password: marshmallow
+      hubTrustStore:
+        path: /ida/truststore/ida_hub_truststore.ts
+        password: marshmallow
+      idpTrustStore:
+        path: /ida/truststore/ida_idp_truststore.ts
+        password: marshmallow
+      minRefreshDelay: 30000
+      maxRefreshDelay: 1800000
+      expectedEntityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+      jerseyClientName: hub-metadata-client
+      client:
+        timeout: 60s
+        timeToLive: 10m
+        cookiesEnabled: false
+        connectionTimeout: 4s
+        retries: 3
+        keepAlive: 60s
+        chunkedEncodingEnabled: false
+        validateAfterInactivityPeriod: 5s
+        # tls:
+        #   protocol: TLSv1.2
+        #   trustStorePath: /ida/truststore/ida_metadata_tls_truststore.ts
+        #   trustStorePassword: marshmallow
+
+    # country:
+    #   enabled: {{ .Values.eidas.enabled }}
+    #   saml:
+    #     entityId: {{ .Values.samlEngine.signinDomain }}/SAML2/metadata/connector
+    #     expectedDestination: {{ .Values.samlEngine.signinDomain }}/SAML2/SSO/EidasResponse/POST
+    #   metadata:
+    #     trustAnchorUri: {{ .Values.eidas.trustAnchorUri }}
+    #     metadataSourceUri: {{ .Values.metadataSourceUri }}
+    #     trustStore:
+    #       store: /ida/truststore/ida_metadata_truststore.ts
+    #       trustStorePassword: marshmallow
+    #     minRefreshDelay: 5000
+    #     maxRefreshDelay: 1800000
+    #     jerseyClientName: country-metadata-client
+    #     client:
+    #       timeout: 60s
+    #       timeToLive: 10m
+    #       cookiesEnabled: false
+    #       connectionTimeout: 4s
+    #       retries: 3
+    #       keepAlive: 60s
+    #       chunkedEncodingEnabled: false
+    #       validateAfterInactivityPeriod: 5s
+    #       # tls:
+    #       #   protocol: TLSv1.2
+    #       #   verifyHostname: false
+    #       #   trustSelfSignedCertificates: true
+    eidas: false

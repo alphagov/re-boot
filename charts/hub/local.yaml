@@ -1,0 +1,8 @@
+# config for running locally
+---
+policy:
+  samlSoapProxyClient:
+    tls:
+      verifyHostname: false
+samlEngine:
+  expectedDestination: http://localhost:30300

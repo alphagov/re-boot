@@ -1,0 +1,173 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stub-idp-config
+data:
+  idps.yml: |
+    stubIdps:
+      - friendlyId: stub-idp-one
+        displayName: Stub IDP One
+        assetId: stub-idp-one
+        idpUserCredentials:
+            - user: ida
+              password: $2a$10$4fHHh0Q8QbbcQ7E6sn4iJOkcGvyZBbsGD43fJdd318vDeee74Pti6
+      - friendlyId: stub-idp-two
+        displayName: Stub IDP Two
+        assetId: stub-idp-two
+        idpUserCredentials:
+            - user: ida
+              password: $2a$10$4fHHh0Q8QbbcQ7E6sn4iJOkcGvyZBbsGD43fJdd318vDeee74Pti6
+      - friendlyId: stub-idp-three
+        displayName: Stub IDP Three
+        assetId: stub-idp-three
+        idpUserCredentials:
+            - user: ida
+              password: $2a$10$4fHHh0Q8QbbcQ7E6sn4iJOkcGvyZBbsGD43fJdd318vDeee74Pti6
+      - friendlyId: stub-idp-four
+        displayName: Best IDP
+        assetId: stub-idp-four
+        idpUserCredentials:
+            - user: ida
+              password: $2a$10$4fHHh0Q8QbbcQ7E6sn4iJOkcGvyZBbsGD43fJdd318vDeee74Pti6
+      - friendlyId: stub-idp-demo
+        displayName: Stub IDP Demo
+        assetId: stub-idp-demo
+        idpUserCredentials:
+            - user: ida
+              password: $2a$10$4fHHh0Q8QbbcQ7E6sn4iJOkcGvyZBbsGD43fJdd318vDeee74Pti6
+  config.yml: |
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+      adminConnectors:
+        - type: http
+          port: 50141
+
+      requestLog:
+        type: classic
+        appenders:
+          - type: console
+          # - type: file
+          #   currentLogFilename: /var/log/debug/stub-idp_access.log
+          #   archivedLogFilenamePattern: /var/log/debug/stub-idp_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-file
+          #   currentLogFilename: /var/log/stub-idp_access.log
+          #   archivedLogFilenamePattern: /var/log/stub-idp_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-syslog
+          #   facility: local2
+          #   tag: stub-idp
+
+    assertionLifetime: 60m
+
+    saml:
+      entityId: "http://%s.local/SSO/POST"
+
+    serviceInfo:
+      name: stub-idp
+
+    logging:
+      level: INFO
+      appenders:
+        - type: console
+        # - type: file
+        #   currentLogFilename: /var/log/debug/stub-idp.log
+        #   archivedLogFilenamePattern: /var/log/debug/stub-idp.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-file
+        #   currentLogFilename: /var/log/stub-idp.log
+        #   archivedLogFilenamePattern: /var/log/stub-idp.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-syslog
+        #   facility: local2
+        #   tag: stub-idp
+
+    signingKeyPairConfiguration:
+      privateKeyConfiguration:
+        type: file
+        key: /pki/stub_idp_signing_primary.pk8
+      publicKeyConfiguration:
+        type: file
+        cert: /pki/stub_idp_signing_primary.crt
+        name: idp.signing.cert
+
+    basicAuthEnabledForUserResource: false
+
+    stubIdpsYmlFileLocation: /idps/stub-idps.yml
+    stubIdpYmlFileRefresh: 10s
+
+    metrics:
+      reporters:
+        - type: graphite
+          host: graphite
+          port: 2003
+          prefix: {{ .Values.stubIdp.metricsPrefix | default "" | quote }}
+          frequency: 24h
+
+    hubEntityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+
+    metadata:
+      client:
+        timeout: 60s
+        timeToLive: 10m
+        connectionTimeout: 4s
+        # tls:
+        #   protocol: TLSv1.2
+        #   verifyHostname: false
+      uri: {{ required "metadata.uri is requied" .Values.metadata.uri }}
+      trustStore:
+        type: file
+        store: /pki/metadata.ts
+        password: marshmallow
+      minRefreshDelay: 30000
+      maxRefreshDelay: 1800000
+      expectedEntityId: 
+
+    europeanIdentity:
+      enabled: false
+      hubConnectorEntityId: http://DefaultNotUsed
+      stubCountryBaseUrl: DefaultNotUsed
+      metadata:
+        jerseyClientName: connector-metadata-client
+        client:
+          timeout: 60s
+          timeToLive: 10m
+          connectionTimeout: 4s
+          tls:
+            protocol: TLSv1.2
+            verifyHostname: false
+        uri: http://DefaultNotUsed
+        trustStore:
+          type: file
+          store: /pki/metadata.ts
+          password: marshmallow
+        minRefreshDelay: 30000
+        maxRefreshDelay: 1800000
+        expectedEntityId: http://DefaultNotUsed
+      signingKeyPairConfiguration:
+        privateKeyConfiguration:
+          type: file
+          key: /pki/stub_idp_signing_primary.pk8
+        publicKeyConfiguration:
+          type: file
+          cert: /pki/stub_idp_signing_primary.crt
+          name: stub_country_signing_cert
+
+    database:
+    # Ensure to run the application you have DB_URI
+    # Format for DB_URI: jdbc:postgresql://host-name:port/database-name?user=user-name&password=password
+    # example: jdbc:postgresql://localhost:5432/postgres?user=postgres&password=password
+      url: jdbc:postgresql://stub-idp-db:5432/postgres?user=postgres
+
+    singleIdpJourney:
+      enabled: false
+      serviceListUri: http://localhost:30300/get-available-services
+      serviceListClient:
+        timeout: 60s
+        timeToLive: 10m
+        connectionTimeout: 4s
+      verifySubmissionUri: http://localhost:30300/initiate-single-idp-journey
+

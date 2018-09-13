@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: saml-engine
+  labels:
+    io.kompose.service: saml-engine
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: saml-engine
+    spec:
+      containers:
+      - name: saml-engine
+        image: govukverify/saml-engine
+        volumeMounts:
+        - name: config-vol
+          mountPath: /saml-engine/saml-engine.yml
+          subPath: saml-engine.yml
+        - name: pki-vol
+          mountPath: /ida/truststore
+      restartPolicy: Always
+      volumes:
+      - name: config-vol
+        configMap:
+          name: saml-engine-config
+          items:
+          - key: saml-engine.yml
+            path: saml-engine.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: hub_signing_primary.crt
+            path: hub_signing.crt
+          - key: metadata.ts
+            path: ida_metadata_truststore.ts
+          - key: relying_parties.ts
+            path: ida_rp_truststore.ts
+          - key: hub_federation.ts
+            path: ida_hub_truststore.ts
+          - key: idp_federation.ts
+            path: ida_idp_truststore.ts
+          - key: hub_signing_primary.pk8
+            path: hub_signing_primary.pk8
+          - key: hub_encryption_primary.pk8
+            path: hub_encryption_primary.pk8
+          - key: hub_encryption_secondary.pk8
+            path: hub_encryption_secondary.pk8
+          - key: hub_encryption_primary.crt
+            path: hub_encryption_primary.crt

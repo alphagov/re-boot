@@ -1,0 +1,51 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: stub-idp
+  labels:
+    io.kompose.service: stub-idp
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: stub-idp
+    spec:
+      containers:
+      - name: stub-idp
+        image: govukverify/stub-idp
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-vol
+          mountPath: /idps/stub-idps.yml
+          subPath: stub-idps.yml
+        - name: config-vol
+          mountPath: /stub-idp/stub-idp.yml
+          subPath: stub-idp.yml
+        - name: pki-vol
+          mountPath: /pki
+      volumes:
+      - name: config-vol
+        configMap:
+          name: stub-idp-config
+          items:
+          - key: idps.yml
+            path: stub-idps.yml
+          - key: config.yml
+            path: stub-idp.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: stub_idp_signing_primary.pk8
+            path: stub_idp_signing_primary.pk8
+          - key: stub_idp_signing_primary.crt
+            path: stub_idp_signing_primary.crt
+          - key: stub_idp_signing_primary.pk8
+            path: stub_idp_signing_primary.pk8
+          - key: stub_idp_signing_primary.crt
+            path: stub_idp_signing_primary.crt
+          - key: metadata.ts
+            path: metadata.ts
+      restartPolicy: Always

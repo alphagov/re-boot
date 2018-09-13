@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-rp
+  labels:
+    io.kompose.service: test-rp
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: test-rp
+    spec:
+      containers:
+      - name: test-rp
+        image: govukverify/test-rp
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-vol
+          mountPath: /test-rp/test-rp.yml
+          subPath: test-rp.yml
+        - name: pki-vol
+          mountPath: /pki
+      volumes:
+      - name: config-vol
+        configMap:
+          name: test-rp-config
+          items:
+          - key: test-rp.yml
+            path: test-rp.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: metadata.ts
+            path: metadata.ts
+          - key: sample_rp_encryption_primary.pk8
+            path: sample_rp_encryption_primary.pk8
+          - key: sample_rp_encryption_primary.crt
+            path: sample_rp_encryption_primary.crt
+          - key: sample_rp_signing_primary.pk8
+            path: sample_rp_signing_primary.pk8
+          - key: sample_rp_signing_primary.crt
+            path: sample_rp_signing_primary.crt
+          - key: hub.ts
+            path: hub.ts
+      restartPolicy: Always

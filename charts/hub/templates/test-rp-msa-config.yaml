@@ -1,0 +1,146 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-rp-msa-config
+data:
+  msa.yml: |
+
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+      adminConnectors:
+        - type: http
+          port: 50211
+      requestLog:
+        appenders:
+          - type: console
+          # - type: file
+          #   currentLogFilename: /var/log/debug/test-rp-msa_access.log
+          #   archivedLogFilenamePattern: /var/log/debug/test-rp-msa_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-file
+          #   currentLogFilename: /var/log/test-rp-msa_access.log
+          #   archivedLogFilenamePattern: /var/log/test-rp-msa_access.log.%d.gz
+          #   archivedFileCount: 7
+          # - type: logstash-syslog
+          #   facility: local2
+          #   tag: test-rp-msa
+
+    logging:
+      level: INFO
+      appenders:
+        - type: console
+        # - type: file
+        #   currentLogFilename: /var/log/debug/test-rp-msa.log
+        #   archivedLogFilenamePattern: /var/log/debug/test-rp-msa.log.%d.gz
+        #   archivedFileCount: 7
+        #   logFormat: '%-5p [%d{ISO8601,UTC}] %c: %X{logPrefix}%m%n%xEx'
+        # - type: logstash-file
+        #   currentLogFilename: /var/log/test-rp-msa.log
+        #   archivedLogFilenamePattern: /var/log/test-rp-msa.log.%d.gz
+        #   archivedFileCount: 7
+        # - type: logstash-syslog
+        #   facility: local2
+        #   tag: test-rp-msa
+
+    metrics:
+      reporters:
+        - type: graphite
+          host: graphite
+          port: 2003
+          prefix: ""
+          frequency: 24h
+
+    matchingServiceAdapter:
+      entityId: http://dev-rp-ms.local/SAML2/MD
+      externalUrl: http://msa/matching-service/POST
+
+    localMatchingService:
+      matchUrl: http://test-rp/test-rp/matching-service/POST
+      accountCreationUrl: http://test-rp/test-rp/unknown-user/POST
+      # client:
+      #   timeout: 60s
+      #   timeToLive: 10m
+      #   connectionTimeout: 4s
+        # tls:
+        #   verifyHostname: false
+        #   trustSelfSignedCertificates: true
+
+    hub:
+      ssoUrl: http://localhost:30300/SAML2/SSO
+      republishHubCertificatesInLocalMetadata: true
+      hubEntityId: https://dev-hub.local
+
+    metadata:
+      url: {{ required "metadata.uri is required" .Values.metadata.uri }}
+      trustStore:
+        path: /pki/metadata.ts
+        password: marshmallow
+      hubTrustStore:
+          path: /pki/hub_federation.ts
+          password: marshmallow
+      idpTrustStore:
+          path: /pki/idp_federation.ts
+          password: marshmallow
+      minRefreshDelay: 30000
+      maxRefreshDelay: 1800000
+      hubEntityId: https://dev-hub.local
+      hubFederationId: VERIFY-FEDERATION
+      # expectedEntityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+      # client:
+      #   timeout: 60s
+      #   timeToLive: 10m
+      #   connectionTimeout: 4s
+      #   retries: 3
+      #   keepAlive: 60s
+      #   chunkedEncodingEnabled: false
+      #   validateAfterInactivityPeriod: 5s
+      #   # tls:
+      #   #   protocol: TLSv1.2
+      #   #   verifyHostname: false
+      #   #   trustSelfSignedCertificates: true
+
+    signingKeys:
+      primary:
+        publicKey:
+          certFile: /pki/sample_rp_msa_signing_primary.crt
+          name: http://www.test-rp-ms.gov.uk/SAML2/MD
+        privateKey:
+          keyFile: /pki/sample_rp_msa_signing_primary.pk8
+
+    encryptionKeys:
+      - publicKey:
+          certFile: /pki/sample_rp_msa_encryption_primary.crt
+          name: http://www.test-rp-ms.gov.uk/SAML2/MD
+        privateKey:
+          keyFile: /pki/sample_rp_msa_encryption_primary.pk8
+
+    returnStackTraceInResponse: true
+
+    europeanIdentity:
+      enabled: false
+      hubConnectorEntityId: http://DefaultNotUsed
+      # aggregatedMetadata:
+      #   trustAnchorUri:
+      #   metadataSourceUri:
+      #   trustStore:
+      #     path: /ida_metadata_truststore.ts
+      #     password: marshmallow
+      #   minRefreshDelay: 5000
+      #   maxRefreshDelay: 600000
+      #   jerseyClientName: trust-anchor-client
+      #   client:
+      #     timeout: 2s
+      #     timeToLive: 10m
+      #     cookiesEnabled: false
+      #     connectionTimeout: 1s
+      #     retries: 3
+      #     keepAlive: 60s
+      #     chunkedEncodingEnabled: false
+      #     validateAfterInactivityPeriod: 5s
+      #     # tls:
+      #     #   protocol: TLSv1.2
+      #     #   verifyHostname: false
+      #     #   trustSelfSignedCertificates: true

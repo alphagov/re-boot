@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: msa
+  name: msa
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: msa
+    spec:
+      containers:
+      - name: msa
+        image: govukverify/matching-service-adapter
+        volumeMounts:
+        - name: config-vol
+          mountPath: /msa/msa.yml
+          subPath: msa.yml
+        - name: pki-vol
+          mountPath: /pki
+      volumes:
+      - name: config-vol
+        configMap:
+          name: test-rp-msa-config
+          items:
+          - key: msa.yml
+            path: msa.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: metadata.ts
+            path: metadata.ts
+          - key: hub_federation.ts
+            path: hub_federation.ts
+          - key: idp_federation.ts
+            path: idp_federation.ts
+          - key: sample_rp_msa_signing_primary.crt
+            path: sample_rp_msa_signing_primary.crt
+          - key: sample_rp_msa_signing_primary.pk8
+            path: sample_rp_msa_signing_primary.pk8
+          - key: sample_rp_msa_encryption_primary.crt
+            path: sample_rp_msa_encryption_primary.crt
+          - key: sample_rp_msa_encryption_primary.pk8
+            path: sample_rp_msa_encryption_primary.pk8
+      restartPolicy: Always

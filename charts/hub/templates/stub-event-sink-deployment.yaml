@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: stub-event-sink
+  labels:
+    io.kompose.service: stub-event-sink
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: stub-event-sink
+    spec:
+      containers:
+      - name: stub-event-sink
+        image: govukverify/stub-event-sink
+      restartPolicy: Always

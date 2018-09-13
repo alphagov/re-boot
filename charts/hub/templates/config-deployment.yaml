@@ -1,0 +1,76 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: config
+  labels:
+    io.kompose.service: config
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: config
+    spec:
+      containers:
+      - name: config
+        image: govukverify/config
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-vol
+          mountPath: /config/config.yml
+          subPath: config.yml
+        - name: stub-fed-vol
+          mountPath: /ida/federation
+        - name: display-locales-vol
+          mountPath: /display-locales
+        - name: pki-vol
+          mountPath: /ida/truststore
+      volumes:
+      - name: config-vol
+        configMap:
+          name: config-config
+          items:
+          - key: config.yml
+            path: config.yml
+      - name: display-locales-vol
+        configMap:
+          name: display-locales-config
+          items:
+          - key: transactions-test-rp.yml
+            path: transactions/test-rp.yml
+      - name: stub-fed-vol
+        configMap:
+          name: stub-fed-config
+          items:
+          - key: matching-services-dev-rp-no-eidas-ms.yml
+            path: matching-services/dev-rp-no-eidas-ms.yml
+          - key: matching-services-dev-rp-ms.yml
+            path: matching-services/dev-rp-ms.yml
+          - key: transactions-dev-rp-no-eidas.yml
+            path: transactions/dev-rp-no-eidas.yml
+          - key: transactions-dev-rp.yml
+            path: transactions/dev-rp.yml
+          - key: idps-stub-idp-one.yml
+            path: idps/stub-idp-one.yml
+          - key: idps-stub-idp-three.yml
+            path: idps/stub-idp-three.yml
+          - key: idps-stub-idp-four.yml
+            path: idps/stub-idp-four.yml
+          - key: idps-stub-idp-two.yml
+            path: idps/stub-idp-two.yml
+          - key: countries-netherlands.yml
+            path: countries/netherlands.yml
+          - key: countries-spain.yml
+            path: countries/spain.yml
+          - key: countries-sweden.yml
+            path: countries/sweden.yml
+          - key: countries-reference.yml
+            path: countries/reference.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: relying_parties.ts
+            path: ida_rp_truststore.ts
+      restartPolicy: Always

@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: policy
+  name: policy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        io.kompose.service: policy
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: policy
+        image: govukverify/policy
+        volumeMounts:
+        - name: config-vol
+          mountPath: /policy/policy.yml
+          subPath: policy.yml
+        - name: pki-vol
+          mountPath: /ida/truststore
+      volumes:
+      - name: config-vol
+        configMap:
+          name: policy-config
+          items:
+          - key: policy.yml
+            path: policy.yml
+      - name: pki-vol
+        configMap:
+          name: pki-config
+          items:
+          - key: hub.ts
+            path: ida_truststore.ts

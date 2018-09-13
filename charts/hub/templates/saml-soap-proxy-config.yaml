@@ -1,0 +1,108 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saml-soap-proxy-config
+data:
+  saml-soap-proxy.yml: |
+    samlEngineUri: {{ required "samlEngine.uri is required" .Values.samlEngine.uri }}
+    configUri: {{ required "config.uri is required" .Values.config.uri }}
+    eventSinkUri: {{ required "eventSink.uri is required" .Values.eventSink.uri }}
+    policyUri: {{ required "policy.uri is required" .Values.policy.uri }}
+
+    server:
+      applicationConnectors:
+        - type: http
+          port: 80
+      adminConnectors:
+        - type: http
+          port: 50161
+      requestLog:
+        appenders:
+          - type: console
+
+    logging:
+      level: INFO
+      appenders:
+        - type: console
+
+    saml:
+      entityId: {{ required "samlEngine.metadataEntityID is required" .Values.samlEngine.metadataEntityID }}
+
+    httpClient:
+      timeout: 2s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 1s
+      retries: 3
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+
+    enableRetryTimeOutConnections: true
+
+    soapHttpClient:
+      timeout: 10s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 2s
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+
+    healthCheckSoapHttpClient:
+      timeout: 2s
+      timeToLive: 10m
+      cookiesEnabled: false
+      connectionTimeout: 2s
+      keepAlive: 60s
+      chunkedEncodingEnabled: false
+      validateAfterInactivityPeriod: 5s
+
+    serviceInfo:
+      name: saml-soap-proxy
+
+    matchingServiceExecutorConfiguration:
+      corePoolSize: 5
+      maxPoolSize: 10
+      keepAliveDuration: 10s
+
+    rpTrustStoreConfiguration:
+      path: /pki/relying_parties.ts
+      password: marshmallow
+
+    metadata:
+      uri: {{ required "metadata.uri is required" .Values.metadata.uri }}
+      trustStorePath: /pki/metadata.ts
+      trustStorePassword: marshmallow
+      trustStore:
+        path: /pki/metadata.ts
+        password: marshmallow
+      hubTrustStore:
+        path: /pki/hub_federation.ts
+        password: marshmallow
+      idpTrustStore:
+        path: /pki/idp_federation.ts
+        password: marshmallow
+      minRefreshDelay: 60000
+      maxRefreshDelay: 600000
+      expectedEntityId: https://dev-hub.local
+      client:
+        timeout: 2s
+        timeToLive: 10m
+        cookiesEnabled: false
+        connectionTimeout: 1s
+        retries: 3
+        keepAlive: 60s
+        chunkedEncodingEnabled: false
+        validateAfterInactivityPeriod: 5s
+
+    eventEmitterConfiguration:
+      enabled: {{ required "policy.eventEmitterConfiguration.enabled is required" .Values.policy.eventEmitterConfiguration.enabled }}
+      {{ if .Values.policy.eventEmitterConfiguration.enabled }}
+      accessKeyId: {{ required "policy.eventEmitterConfiguration.accessKeyId is required" .Values.policy.eventEmitterConfiguration.accessKeyId }}
+      secretAccessKey: {{ required "policy.eventEmitterConfiguration.secretAccessKey is required" .Values.policy.eventEmitterConfiguration.secretAccessKey }}
+      region: {{ required "policy.eventEmitterConfiguration.region is required" .Values.policy.eventEmitterConfiguration.region }}
+      encryptionKey: {{ required "policy.eventEmitterConfiguration.encryptionKey is required" .Values.policy.eventEmitterConfiguration.encryptionKey }}
+      apiGatewayUrl: {{ required "policy.eventEmitterConfiguration.apiGatewayUrl" .Values.policy.eventEmitterConfiguration.apiGatewayUrl }}
+      {{ end }}

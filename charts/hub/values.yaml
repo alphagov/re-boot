@@ -1,0 +1,81 @@
+# Default values for hub.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+clientTrustStoreConfiguration:
+  password: marshmallow
+rpTrustStoreConfiguration:
+  password: marshmallow
+
+metadata:
+  uri: http://metadata/dev.xml
+
+  metadataSourceUri: http://not-used
+
+eidas:
+  enabled: false
+  trustAnchorUri: 
+
+config:
+  uri: http://config
+  server:
+    keyStorePassword: marshmallow
+  metricsPrefix:
+
+samlEngine:
+  uri: http://saml-engine
+  metadataEntityID: https://dev-hub.local
+  expectedDestination:
+  signinDomain: http://localhost
+  metricsPrefix:
+  infinispan:
+    bindAddress:
+    initialHosts:
+    type: standalone
+
+eventSink:
+  uri: http://stub-event-sink
+
+samlSoapProxy:
+    uri: http://saml-soap-proxy
+    metricsPrefix:
+
+policy:
+  uri: http://policy
+  server:
+    keyStorePassword: marshmallow
+  metricsPrefix:
+  infinispan:
+    bindAddress:
+    initialHosts:
+    type: standalone
+    encryptConfiguration:
+      keyStorePassword: marshmallow
+    authConfiguration:
+      authValue: marshmallow
+      keyStorePassword: marshmallow
+  httpClient:
+    tls:
+      trustStorePassword: marshmallow
+  samlSoapProxyClient:
+    tls:
+      trustStorePassword: marshmallow
+      verifyHostname: true
+  serviceInfo:
+    name: policy
+  clientTrustStoreConfiguration:
+    password: marshmallow
+  logging:
+    level: INFO
+    raven:
+      sentryDSN: naive+https://sentry/1
+  eidas: false
+  eventEmitterConfiguration:
+    enabled: false
+    accessKeyId:
+    secretAccessKey:
+    region: eu-west-2
+    encryptionKey:
+    apiGatewayUrl:
+
+stubIdp:
+  metricsPrefix:
