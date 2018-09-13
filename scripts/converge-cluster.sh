@@ -81,11 +81,28 @@ echo "✅  Vault is installed"
 echo "    🔧  Installing Concourse"
 export EXTERNAL_CONCOURSE_URL="concourse.${DEPLOY_ENV}.govsvc.uk"
 
+####
+# These need to stay as they were...
+###
 export LIVENESS_PROBE_FATAL_ERRORS="\${LIVENESS_PROBE_FATAL_ERRORS}"
 export FATAL_ERRORS="\${FATAL_ERRORS}"
-export CONCOURSE_URL="\${CONCOURSE_URL}"
 export HOSTNAME="\${HOSTNAME}"
-export EXTERNAL_CONCOURSE_URL="\${EXTERNAL_CONCOURSE_URL}"
+####
+
+mkdir -p "${ROOT_DIR}/assets/concourse"
+ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/host"
+ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/session"
+ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/worker"
+
+CONCOURSE_HOST_SECRET="$(cat "${ROOT_DIR}/assets/concourse/host" | base64)"
+CONCOURSE_HOST_PUBLIC="$(cat "${ROOT_DIR}/assets/concourse/host.pub" | base64)"
+CONCOURSE_SESSION_SECRET="$(cat "${ROOT_DIR}/assets/concourse/session" | base64)"
+CONCOURSE_WORKER_SECRET="$(cat "${ROOT_DIR}/assets/concourse/worker" | base64)"
+CONCOURSE_WORKER_PUBLIC="$(cat "${ROOT_DIR}/assets/concourse/worker.pub" | base64)"
+CONCOURSE_USERNAME="$(echo -n "admin" | base64)"
+CONCOURSE_PASSWORD="$(openssl rand -base64 32 | tr -d '\n' | base64)"
+export CONCOURSE_HOST_SECRET CONCOURSE_HOST_PUBLIC CONCOURSE_SESSION_SECRET CONCOURSE_WORKER_SECRET CONCOURSE_WORKER_PUBLIC CONCOURSE_USERNAME CONCOURSE_PASSWORD
+
 kubectl apply -f "${ROOT_DIR}/kubernetes/concourse/namespace.yaml"
 cat $(find "${ROOT_DIR}/kubernetes/concourse" -type f -name '*.yaml') | interpolator -f | kubectl -n concourse apply -f -
 echo "✅  Concourse is installed"

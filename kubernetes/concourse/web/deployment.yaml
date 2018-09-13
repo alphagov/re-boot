@@ -187,6 +187,3 @@ spec:
                 path: session_signing_key
               - key: worker-key-pub
                 path: worker_key.pub
-        - name: concourse-pipeline
-          configMap:
-            name: concourse-pipeline-config
