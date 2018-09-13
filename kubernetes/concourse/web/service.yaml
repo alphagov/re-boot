@@ -11,7 +11,7 @@ metadata:
     heritage: "Tiller"
     dns: route53
   annotations:
-    external-dns.alpha.kubernetes.io/hostname: "KUBECTL_CONCOURSE_URL"
+    external-dns.alpha.kubernetes.io/hostname: "${EXTERNAL_CONCOURSE_URL}"
 spec:
   type: LoadBalancer
   ports:

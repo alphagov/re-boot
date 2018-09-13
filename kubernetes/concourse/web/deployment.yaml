@@ -36,7 +36,7 @@ spec:
             - "--main-team-local-user"
             - $(CONCOURSE_BASIC_AUTH_USERNAME)
             - "--external-url"
-            - "http://KUBECTL_CONCOURSE_URL:8080"
+            - "http://${EXTERNAL_CONCOURSE_URL}:8080"
           env:
             - name: CONCOURSE_TSA_HOST_KEY
               value: "/concourse-keys/host_key"
@@ -92,11 +92,11 @@ spec:
             - name: CONCOURSE_KUBERNETES_NAMESPACE_PREFIX
               value: concourse-
             - name: CONCOURSE_VAULT_URL
-              value: "((VAULT_URL))"
+              value: "${VAULT_URL}"
             - name: CONCOURSE_VAULT_CA_CERT
-              value: "((VAULT_CA_CERT))"
+              value: "${VAULT_CA_CERT}"
             - name: CONCOURSE_VAULT_CLIENT_TOKEN
-              value: "((VAULT_CLIENT_TOKEN))"
+              value: "${VAULT_CLIENT_TOKEN}"
             - name: CONCOURSE_VAULT_INSECURE_SKIP_VERIFY
               value: "true"
 
