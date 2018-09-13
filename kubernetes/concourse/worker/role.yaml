@@ -1,7 +1,9 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
   name: concourse-worker
+  namespace: concourse
   labels:
     app: concourse-worker
     chart: concourse-1.15.0

@@ -1,7 +1,9 @@
+---
 apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: concourse-worker
+  namespace: concourse
   labels:
     app: concourse-worker
     chart: "concourse-1.15.0"

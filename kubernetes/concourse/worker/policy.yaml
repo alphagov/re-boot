@@ -1,7 +1,9 @@
+---
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: concourse-worker
+  namespace: concourse
   labels:
     app: concourse-worker
     chart: "concourse-1.15.0"

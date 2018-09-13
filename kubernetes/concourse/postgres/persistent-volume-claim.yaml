@@ -1,7 +1,9 @@
+---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: concourse-postgresql
+  namespace: concourse
   labels:
     app: postgresql
     chart: postgresql-0.13.1

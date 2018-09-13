@@ -1,7 +1,9 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
   name: concourse-web
+  namespace: concourse
   labels:
     app: concourse-web
     chart: concourse-1.15.0
