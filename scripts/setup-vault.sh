@@ -32,39 +32,14 @@ fi
 echo "Logging into vault"
 vault login "$(awk '/Initial Root Token/ {print $NF}' "${ROOT_DIR}/assets/vault-keys.txt")"
 
-echo "Creating ServiceAccount"
-kubectl -n vault get serviceaccount vault-tokenreview &> /dev/null || kubectl -n vault create serviceaccount vault-tokenreview
-
-echo "Applying Cluster Role Binding"
-kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/cluster-role-binding.yaml"
-
-SECRET_NAME=$(kubectl -n vault get serviceaccount vault-tokenreview -o jsonpath='{.secrets[0].name}')
-TR_ACCOUNT_TOKEN=$(kubectl -n vault get secret "${SECRET_NAME}" -o jsonpath='{.data.token}' | base64 --decode)
-
 echo "Enabling kubernetes auth in vault"
 
-vault auth disable kubernetes
+vault auth disable cert
+vault auth enable cert
+
 vault secrets disable /concourse
-sleep 3
-vault auth enable kubernetes
-awk '/certificate-authority-data/ {print $NF}' ~/.kube/kubeconfig | base64 -D > "${ROOT_DIR}/assets/ca.crt"
-vault write auth/kubernetes/config kubernetes_host="$(kubectl config view --minify | awk '/server/ {print $NF}')" kubernetes_ca_cert="@${ROOT_DIR}/assets/ca.crt" token_reviewer_jwt="${TR_ACCOUNT_TOKEN}"
 vault secrets enable -path=/concourse -description="Secrets for concourse pipelines" generic
 
 echo "Applying policies"
 vault write sys/policy/concourse-policy policy="@${ROOT_DIR}/kubernetes/vault/vault-policies.hcl"
-vault write auth/kubernetes/role/concourse-role \
-  bound_service_account_names=default \
-  bound_service_account_namespaces=vault \
-  policies=concourse-policy \
-  ttl=1h
-
-echo "Preparing environment"
-
-SECRET_NAME=$(kubectl -n vault get serviceaccount default -o jsonpath='{.secrets[0].name}')
-DEFAULT_ACCOUNT_TOKEN=$(kubectl -n vault get secret "${SECRET_NAME}" -o jsonpath='{.data.token}' | base64 --decode)
-export SECRET_NAME DEFAULT_ACCOUNT_TOKEN
-
-vault write auth/kubernetes/login role=concourse-role jwt="${DEFAULT_ACCOUNT_TOKEN}"
-
-vault token-create --policy=policy-concourse -period="600h" -format=json | jq -r .auth.client_token > "${ROOT_DIR}/assets/account-token.txt"
+vault write auth/cert/certs/concourse display_name=concourse policies=concourse-policy certificate="@${ROOT_DIR}/assets/concourse/vault-cert.pem"

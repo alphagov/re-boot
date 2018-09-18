@@ -67,7 +67,7 @@ kubectl apply -f "${ROOT_DIR}/kubernetes/vault/custom-resource-definition.yaml"
 kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/deployment.yaml"
 kubectl -n vault apply -f "${ROOT_DIR}/kubernetes/vault/vault-service.yaml"
 SEALED_VAULT="$(kubectl -n vault get vault vault-service -o jsonpath='{.status.vaultStatus.sealed[0]}')"
-if [ ! -z "${SEALED_VAULT}"]; then
+if [ ! -z "${SEALED_VAULT}" ]; then
   echo '💤  Leaving some headroom for vault to stabilise - 5m - you may need to wait and restart it if following fails'
   # You might have come here to see WHY ON EARH you need to wait 5 minutes...
   # Well, we're deploying something called vault-operator. It's basically, yet
@@ -81,10 +81,7 @@ fi
 echo '💤  Setting up Vault'
 sh ${SCRIPT_DIR}/setup-vault.sh
 
-VAULT_URL="https://vault-service.vault.svc.cluster.local:8200/"
-VAULT_CA_CERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-VAULT_CLIENT_TOKEN="$(cat "${ROOT_DIR}/assets/account-token.txt")"
-export VAULT_URL VAULT_CA_CERT VAULT_CLIENT_TOKEN 
+export VAULT_URL="https://vault-service.vault.svc.cluster.local:8200/"
 
 echo "✅  Vault is installed"
 
@@ -97,24 +94,37 @@ export EXTERNAL_CONCOURSE_URL="concourse.${DEPLOY_ENV}.govsvc.uk"
 export LIVENESS_PROBE_FATAL_ERRORS="\${LIVENESS_PROBE_FATAL_ERRORS}"
 export FATAL_ERRORS="\${FATAL_ERRORS}"
 export HOSTNAME="\${HOSTNAME}"
+export KUBERNETES_SERVICE_TOKEN="\${KUBERNETES_SERVICE_TOKEN}"
 ####
 
 mkdir -p "${ROOT_DIR}/assets/concourse"
-ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/host"
-ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/session"
-ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/worker"
+if [[ ! -e "${ROOT_DIR}/assets/concourse/host" ]]; then
+  ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/host"
+fi
+if [[ ! -e "${ROOT_DIR}/assets/concourse/session" ]]; then
+  ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/session"
+fi
+if [[ ! -e "${ROOT_DIR}/assets/concourse/worker" ]]; then
+  ssh-keygen -t rsa -b 4096 -N '' -f "${ROOT_DIR}/assets/concourse/worker"
+fi
+if [[ ! -e "${ROOT_DIR}/assets/concourse/vault-key.pem" ]]; then
+  openssl req -nodes -new  -x509 -keyout "${ROOT_DIR}/assets/concourse/vault-key.pem" -out "${ROOT_DIR}/assets/concourse/vault-cert.pem"
+fi
 
 CONCOURSE_HOST_SECRET="$(cat "${ROOT_DIR}/assets/concourse/host" | base64)"
 CONCOURSE_HOST_PUBLIC="$(cat "${ROOT_DIR}/assets/concourse/host.pub" | base64)"
 CONCOURSE_SESSION_SECRET="$(cat "${ROOT_DIR}/assets/concourse/session" | base64)"
 CONCOURSE_WORKER_SECRET="$(cat "${ROOT_DIR}/assets/concourse/worker" | base64)"
 CONCOURSE_WORKER_PUBLIC="$(cat "${ROOT_DIR}/assets/concourse/worker.pub" | base64)"
+CONCOURSE_VAULT_KEY="$(cat "${ROOT_DIR}/assets/concourse/vault-key.pem" | base64)"
+CONCOURSE_VAULT_CERTIFICATE="$(cat "${ROOT_DIR}/assets/concourse/vault-cert.pem" | base64)"
 CONCOURSE_USERNAME="$(echo -n "admin" | base64)"
 CONCOURSE_PASSWORD="$(openssl rand -base64 32 | tr -d '\n' | base64)"
-export CONCOURSE_HOST_SECRET CONCOURSE_HOST_PUBLIC CONCOURSE_SESSION_SECRET CONCOURSE_WORKER_SECRET CONCOURSE_WORKER_PUBLIC CONCOURSE_USERNAME CONCOURSE_PASSWORD
+export CONCOURSE_HOST_SECRET CONCOURSE_HOST_PUBLIC CONCOURSE_SESSION_SECRET CONCOURSE_WORKER_SECRET CONCOURSE_WORKER_PUBLIC CONCOURSE_VAULT_KEY CONCOURSE_VAULT_CERTIFICATE CONCOURSE_USERNAME CONCOURSE_PASSWORD
 
 kubectl apply -f "${ROOT_DIR}/kubernetes/concourse/namespace.yaml"
 cat $(find "${ROOT_DIR}/kubernetes/concourse" -type f -name '*.yaml') | interpolator -f | kubectl -n concourse apply -f -
+VAULT_SKIP_VERIFY="true" vault write concourse/main/concourse username="$(echo "${CONCOURSE_USERNAME}" | base64 -D)" password="$(echo "${CONCOURSE_PASSWORD}" | base64 -D)"
 echo "✅  Concourse is installed"
 
 echo "🔧  Installing Prometheus"

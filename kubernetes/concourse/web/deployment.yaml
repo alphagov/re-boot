@@ -93,10 +93,12 @@ spec:
               value: concourse-
             - name: CONCOURSE_VAULT_URL
               value: "${VAULT_URL}"
-            - name: CONCOURSE_VAULT_CA_CERT
-              value: "${VAULT_CA_CERT}"
-            - name: CONCOURSE_VAULT_CLIENT_TOKEN
-              value: "${VAULT_CLIENT_TOKEN}"
+            - name: CONCOURSE_VAULT_AUTH_BACKEND
+              value: "cert"
+            - name: CONCOURSE_VAULT_CLIENT_KEY
+              value: "/concourse-vault-certs/key.pem"
+            - name: CONCOURSE_VAULT_CLIENT_CERT
+              value: "/concourse-vault-certs/cert.pem"
             - name: CONCOURSE_VAULT_INSECURE_SKIP_VERIFY
               value: "true"
 
@@ -124,40 +126,6 @@ spec:
               port: atc
             initialDelaySeconds: 120
             timeoutSeconds: 5
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                - /bin/bash
-                - -c
-                - |-
-                  TARGET="cluster-name-irrelevant"
-                  PIPELINES=$(fly -t $TARGET pipelines | awk '{print $1}')
-
-                  function logged_in() {
-                    fly login \
-                      -c "http://localhost:8080/" \
-                      -k \
-                      -u "concourse" \
-                      -p "concourse" \
-                      -t "$TARGET"
-                  }
-                  while ! logged_in; do
-                    sleep 10
-                  done
-
-                  for PIPELINE in $PIPELINES; do
-                  JOBS=$(fly -t $TARGET jobs -p $PIPELINE | awk '{print $4}')
-                    for [ JOB in $JOBS ]; do
-                      if $JOB != "n/a"; then
-                      echo "Something running"
-                    else
-                      while ! concourse retire-worker --name=${HOSTNAME} | grep -q worker-not-found; do
-                        sleep 5
-                      done
-                    fi
-                    done
-                  done
 
           readinessProbe:
             httpGet:
@@ -174,6 +142,10 @@ spec:
             - name: concourse-keys
               mountPath: /concourse-keys
               readOnly: true
+
+            - name: concourse-vault-certs
+              mountPath: /concourse-vault-certs
+              readOnly: true
       affinity:
       volumes:
         - name: concourse-keys
@@ -187,3 +159,12 @@ spec:
                 path: session_signing_key
               - key: worker-key-pub
                 path: worker_key.pub
+        - name: concourse-vault-certs
+          secret:
+            secretName: concourse-vault-certs
+            defaultMode: 0400
+            items:
+              - key: key-pem
+                path: key.pem
+              - key: cert-pem
+                path: cert.pem
